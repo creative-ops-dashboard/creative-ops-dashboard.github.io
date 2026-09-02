@@ -310,7 +310,7 @@
     </div>
 
     <div class="note">
-      <b>Кликните по любому креативу</b> — откроется карточка с полной историей по всем тестам, где он участвовал. <b>Метрики:</b> IPM, Installs, CTR, IR — реальные данные из Adjoe DSP Reporting API (лист «creatives», Шаг 1). У идущих сейчас тестов метрик ещё нет — данные появятся, когда тест закроется. ROAS d3 временно убран из карточек: раньше показывалось одно усреднённое значение за последние 3 периода на все исторические тесты подряд, что для старых закрытых тестов было некорректно — вернём, когда научимся писать period-accurate ROAS прямо в таблицу через AppsFlyer. Превью — реальные файлы из папок Adjoe на Google Диске, сопоставленные точно по имени. Результаты тестов можно также добавлять вручную — сохраняются в браузере (<code>window.storage</code>).
+      <b>Кликните по любому креативу</b> — откроется карточка с полной историей по всем тестам, где он участвовал. <b>Метрики:</b> IPM, Installs, CTR, IR — реальные данные из Adjoe DSP Reporting API (лист «creatives», Шаг 1). У идущих сейчас тестов метрик ещё нет — данные появятся, когда тест закроется. ROAS d3 — по каждому периоду отдельно, вписывается вручную из AppsFlyer в таблицу (может отсутствовать для части периодов). Превью — реальные файлы из папок Adjoe на Google Диске, сопоставленные точно по имени. Результаты тестов можно также добавлять вручную — сохраняются в браузере (<code>window.storage</code>).
       <span class="note-toggle" id="resetDataBtn">Сбросить добавленные вручную данные</span>
     </div>
 
@@ -504,6 +504,7 @@ function metricChips(m){
   if(m.installs!=null) chips.push(`<span class="ipm-tag">${fmtNum_(m.installs)} инст.</span>`);
   if(m.ctr) chips.push(`<span class="ipm-tag">CTR ${m.ctr}</span>`);
   if(m.ir) chips.push(`<span class="ipm-tag">IR ${m.ir}</span>`);
+  if(m.roas3) chips.push(`<span class="ipm-tag">ROAS d3 ${m.roas3}</span>`);
   return chips.join('');
 }
 
@@ -797,6 +798,7 @@ function openCreativeModal(encodedName){
       <span class="mm-ipm">${m.ipm||'—'}</span>
       <span class="mm-line">${fmtNum_(m.installs)||'—'} инст.</span>
       <span class="mm-line">CTR ${m.ctr||'—'} · IR ${m.ir||'—'}</span>
+      <span class="mm-line">ROAS d3 ${m.roas3||'—'}</span>
     </div>`;
   }
 
