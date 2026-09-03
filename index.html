@@ -372,13 +372,30 @@ function fmtMetric_(m){
   };
 }
 
+/* Apps Script Web App иногда отвечает не сразу (холодный старт, кратковременная
+   ошибка сразу после редеплоя) — прежде чем показать ошибку пользователю,
+   тихо пробуем ещё пару раз с небольшой паузой. */
+async function fetchWithRetry_(url, attempts, delayMs){
+  let lastErr;
+  for(let i=0;i<attempts;i++){
+    try{
+      const resp = await fetch(url, {cache:'no-store'});
+      if(!resp.ok) throw new Error('HTTP '+resp.status);
+      const json = await resp.json();
+      if(json.error) throw new Error(json.error);
+      return json;
+    }catch(err){
+      lastErr = err;
+      if(i < attempts-1) await new Promise(r=>setTimeout(r, delayMs));
+    }
+  }
+  throw lastErr;
+}
+
 async function loadLiveData_(){
   const loadingEl = document.getElementById('liveLoadState');
   try{
-    const resp = await fetch(WEBAPP_URL, {cache:'no-store'});
-    if(!resp.ok) throw new Error('HTTP '+resp.status);
-    const json = await resp.json();
-    if(json.error) throw new Error(json.error);
+    const json = await fetchWithRetry_(WEBAPP_URL, 3, 1500);
 
     abTests2026 = (json.periods||[]).map(p=>({
       period: p.period,
