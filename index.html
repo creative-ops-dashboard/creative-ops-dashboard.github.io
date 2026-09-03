@@ -85,17 +85,6 @@
   .note code{background:var(--panel-3);padding:1px 5px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--accent);}
   .note-toggle{cursor:pointer;color:var(--accent);text-decoration:underline;font-weight:600;}
 
-  /* ---- add-data panel ---- */
-  .add-panel{
-    background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:26px;display:none;
-  }
-  .add-panel.open{display:block;}
-  .add-panel h4{margin:0 0 12px;font-family:'Fraunces',serif;font-size:16px;}
-  .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:12px;}
-  .form-grid textarea{grid-column:1/-1;min-height:60px;resize:vertical;}
-  .form-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
-  .form-note{font-size:11.5px;color:var(--muted-2);margin-top:8px;}
-
   /* ---- ADJOE test cards ---- */
 
   /* accordion for past periods */
@@ -120,7 +109,6 @@
   .period-accordion .period-dot{
     width:8px;height:8px;border-radius:50%;background:var(--muted-2);flex:none;
   }
-  .period-accordion .period-dot.custom{background:var(--accent);}
   .period-accordion .period-count{
     margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted-2);
     background:var(--panel-2);padding:3px 9px;border-radius:20px;
@@ -143,7 +131,6 @@
 
   .test-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;}
   .test-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;position:relative;}
-  .test-card.custom{border-color:var(--accent-dim);}
   .test-card.wide{grid-column:span 1;}
   @media(min-width:900px){ .test-grid{grid-template-columns:repeat(auto-fill,minmax(420px,1fr));} }
   .test-card.running{border-color:var(--warn-dim);}
@@ -181,7 +168,6 @@
   .test-top{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
   .game-pill{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:11.5px;padding:3px 9px;border-radius:5px;background:var(--panel-2);color:var(--accent);}
   .period-tag{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--muted);}
-  .custom-flag{margin-left:auto;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);border:1px solid var(--accent-dim);padding:2px 7px;border-radius:20px;}
   .plat-row{display:flex;gap:16px;margin-bottom:10px;}
   .plat{font-size:12px;display:flex;flex-direction:column;gap:2px;}
   .plat b{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted-2);text-transform:uppercase;font-weight:600;}
@@ -190,12 +176,6 @@
   .t-tag{color:var(--muted);}
   .test-comment{font-size:12.5px;color:var(--muted);line-height:1.55;}
   .test-comment em{color:var(--text);font-style:normal;}
-  .remove-x{
-    position:absolute;top:10px;right:10px;width:24px;height:24px;border-radius:6px;
-    background:rgba(18,21,27,.7);color:var(--muted);border:none;cursor:pointer;font-size:14px;line-height:1;
-    display:flex;align-items:center;justify-content:center;
-  }
-  .remove-x:hover{color:var(--bad);}
 
   /* ---- rank timeline ---- */
 
@@ -304,50 +284,10 @@
         <h2>Adjoe: оптимизация и A/B-тесты креативов</h2>
         <p>Данные по A/B-тестам — с 22.05.2026 по сегодня, 10 периодов, 55 тестов (лист «creatives», обновляется через Шаг 1/Шаг 2 в Apps Script). Метрики — IPM, Installs, CTR, IR — реальные данные из Adjoe DSP Reporting API. У идущих сейчас тестов метрик ещё нет — только статус «идёт тест». Кликните по любому креативу для полной истории по тестам.</p>
       </div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn" id="toggleAddTest">+ Добавить результат теста</button>
-      </div>
     </div>
 
     <div class="note">
-      <b>Кликните по любому креативу</b> — откроется карточка с полной историей по всем тестам, где он участвовал. <b>Метрики:</b> IPM, Installs, CTR, IR — реальные данные из Adjoe DSP Reporting API (лист «creatives», Шаг 1). У идущих сейчас тестов метрик ещё нет — данные появятся, когда тест закроется. ROAS d3 — по каждому периоду отдельно, вписывается вручную из AppsFlyer в таблицу (может отсутствовать для части периодов). Превью — реальные файлы из папок Adjoe на Google Диске, сопоставленные точно по имени. Результаты тестов можно также добавлять вручную — сохраняются в браузере (<code>window.storage</code>).
-      <span class="note-toggle" id="resetDataBtn">Сбросить добавленные вручную данные</span>
-    </div>
-
-    <div class="add-panel" id="addTestPanel">
-      <h4>Новый результат A/B-теста</h4>
-      <div class="form-grid">
-        <select class="field" id="f-game">
-          <option value="WS">WS — Word Spells</option>
-          <option value="WP">WP — Word Pizza</option>
-          <option value="WSS">WSS — Word Search Sea</option>
-          <option value="SW">SW — Sky Words</option>
-          <option value="FW">FW — Fillwords</option>
-          <option value="CS">CS — CardScapes</option>
-          <option value="SM">SM — Sudoku Master</option>
-        </select>
-        <input class="field" id="f-period" type="text" placeholder="Период, напр. 12.09 – 19.09.2026">
-        <select class="field" id="f-ios">
-          <option value="v1">iOS: победил v1 (новый)</option>
-          <option value="v0">iOS: победил v0 (контроль)</option>
-          <option value="tie">iOS: почти ничья</option>
-          <option value="—">iOS: нет данных</option>
-        </select>
-        <select class="field" id="f-gp">
-          <option value="v1">GP: победил v1 (новый)</option>
-          <option value="v0">GP: победил v0 (контроль)</option>
-          <option value="tie">GP: почти ничья</option>
-          <option value="—">GP: нет данных</option>
-        </select>
-        <input class="field" id="f-img0" type="text" placeholder="Ссылка на картинку v0 (необязательно)">
-        <input class="field" id="f-img1" type="text" placeholder="Ссылка на картинку v1 (необязательно)">
-        <textarea class="field" id="f-comment" placeholder="Комментарий / метрики (IPM, CTR и т.д.)"></textarea>
-      </div>
-      <div class="form-actions">
-        <button class="btn primary" id="saveTestBtn">Сохранить тест</button>
-        <button class="btn ghost" id="cancelTestBtn">Отмена</button>
-        <span class="form-note">Сохраняется локально через window.storage, привязано к этой странице.</span>
-      </div>
+      <b>Кликните по любому креативу</b> — откроется карточка с полной историей по всем тестам, где он участвовал. <b>Метрики:</b> IPM, Installs, CTR, IR — реальные данные из Adjoe DSP Reporting API (лист «creatives», Шаг 1). У идущих сейчас тестов метрик ещё нет — данные появятся, когда тест закроется. ROAS d3 — по каждому периоду отдельно, вписывается вручную из AppsFlyer в таблицу (может отсутствовать для части периодов). Превью — реальные файлы из папок Adjoe на Google Диске.
     </div>
 
     <div id="liveLoadState" class="note">Загружаю данные из таблицы…</div>
@@ -404,32 +344,10 @@
 </main>
 
 <footer>
-  Источники: «Требования к креативам», «Обновления креативов на разных сорсах», «Оптимизация креативов Adjoe» — Google Sheets + реальные превью из папок Adjoe на Google Диске. Данные тестов дополняемы вручную, хранятся в window.storage.
+  Источники: «Требования к креативам», «Обновления креативов на разных сорсах», «Оптимизация креативов Adjoe» — Google Sheets + реальные превью из папок Adjoe на Google Диске.
 </footer>
 
 <script>
-/* ===================== STORAGE HELPERS ===================== */
-let memFallback = {}; // used only if window.storage is unavailable in this session
-async function storeGet(key){
-  try{
-    if(!window.storage) return memFallback[key] ?? null;
-    const r = await window.storage.get(key,false);
-    return r ? r.value : null;
-  }catch(e){ return memFallback[key] ?? null; }
-}
-async function storeSet(key,value){
-  try{
-    if(!window.storage){ memFallback[key]=value; return; }
-    await window.storage.set(key,value,false);
-  }catch(e){ memFallback[key]=value; }
-}
-async function storeDelete(key){
-  try{
-    if(!window.storage){ delete memFallback[key]; return; }
-    await window.storage.delete(key,false);
-  }catch(e){ delete memFallback[key]; }
-}
-
 const initials = s => s.replace(/[^A-Za-zА-Яа-я0-9]/g,'').slice(0,2).toUpperCase();
 
 /* ===================== LIVE DATA: fetch from Apps Script Web App ===================== */
@@ -437,7 +355,6 @@ const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyEb9b7ttrlrb90qcJvl
 
 let abTests2026 = [];
 let creativeHistory = {};
-let customTests = [];
 const allCreoImages = {};
 
 /* сырое число из Sheets (0.1234) -> "12.34%" ; null/undefined остаются null */
@@ -580,26 +497,6 @@ function gameCardHTML(t){
   `;
 }
 
-function customCardHTML(t, idx){
-  const winner = t.creatives.find(c=>c.status==='win');
-  return `
-    <div class="test-card wide custom">
-      <button class="remove-x" data-idx="${idx}" title="Удалить">✕</button>
-      <div class="test-body">
-        <div class="test-top">
-          <span class="game-pill">${t.game}</span>
-          <span class="period-tag">${t.period}</span>
-          <span class="custom-flag">добавлено вручную</span>
-        </div>
-        <div class="creo-list">
-          ${t.creatives.map(creativeRowHTML).join('')}
-        </div>
-        ${t.c?`<div class="test-comment">${t.c}</div>`:''}
-      </div>
-    </div>
-  `;
-}
-
 function renderStats(){
   let completed = 0, running = 0;
   const games = new Set();
@@ -612,9 +509,8 @@ function renderStats(){
     <div class="stat-box"><div class="num">${completed}</div><div class="lbl">Завершённых тестов (с 22.05.2026)</div></div>
     <div class="stat-box"><div class="num">${running}</div><div class="lbl">Тестов идёт сейчас</div></div>
     <div class="stat-box"><div class="num">${games.size}</div><div class="lbl">Игр в ротации на Adjoe</div></div>
-    <div class="stat-box"><div class="num">${customTests.length}</div><div class="lbl">Добавлено вручную</div></div>
   `;
-  const total = completed + running + customTests.length;
+  const total = completed + running;
   document.getElementById('cnt-adjoe').textContent = total + ' тестов';
 }
 
@@ -649,68 +545,9 @@ function renderTestGrid(){
       </div>
     </details>
   `).join('');
-  if(customTests.length){
-    html += `
-      <details class="period-accordion" open>
-        <summary>
-          <span class="period-dot custom"></span>
-          <span class="period-summary-title">Добавлено вручную</span>
-          <span class="period-count">${customTests.length}</span>
-        </summary>
-        <div class="test-grid">
-          ${customTests.map((t,i)=>customCardHTML(t,i)).join('')}
-        </div>
-      </details>`;
-  }
   pastWrap.innerHTML = html;
-  pastWrap.querySelectorAll('.remove-x').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      const idx = Number(btn.dataset.idx);
-      customTests.splice(idx,1);
-      await storeSet('adjoe_tests_custom', JSON.stringify(customTests));
-      renderTestGrid(); renderStats();
-    });
-  });
 }
 
-/* ---- Add-test form wiring ---- */
-document.getElementById('toggleAddTest').addEventListener('click', ()=>{
-  document.getElementById('addTestPanel').classList.toggle('open');
-});
-document.getElementById('cancelTestBtn').addEventListener('click', ()=>{
-  document.getElementById('addTestPanel').classList.remove('open');
-});
-document.getElementById('saveTestBtn').addEventListener('click', async ()=>{
-  const iosSel = document.getElementById('f-ios').value; // v0/v1/tie/—
-  const gpSel = document.getElementById('f-gp').value;
-  const v1wins = iosSel==='v1' || gpSel==='v1';
-  const mk = (winsPlatform) => winsPlatform ? {spend:null,installs:null,clicks:null,views:null,cpi:null,ctr:null,ir:null,ipm:'выше',ecpm:null,roas0:null,roas3:null,roas7:null} : null;
-  const t = {
-    game: document.getElementById('f-game').value,
-    period: document.getElementById('f-period').value.trim() || 'без даты',
-    running: false,
-    creatives: [
-      {name:'Вариант A (контроль)', status: v1wins? 'lost':'win',
-       ios: mk(iosSel==='v0'), gp: mk(gpSel==='v0'),
-       img: document.getElementById('f-img0').value.trim() || null},
-      {name:'Вариант B (новый)', status: v1wins? 'win':'lost',
-       ios: mk(iosSel==='v1'), gp: mk(gpSel==='v1'),
-       img: document.getElementById('f-img1').value.trim() || null},
-    ],
-    c: document.getElementById('f-comment').value.trim(),
-  };
-  customTests.unshift(t);
-  await storeSet('adjoe_tests_custom', JSON.stringify(customTests));
-  ['f-period','f-img0','f-img1','f-comment'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('addTestPanel').classList.remove('open');
-  renderTestGrid(); renderStats();
-});
-document.getElementById('resetDataBtn').addEventListener('click', async ()=>{
-  if(!confirm('Удалить все вручную добавленные тесты? Данные из исходных таблиц не затронутся.')) return;
-  customTests = [];
-  await storeDelete('adjoe_tests_custom');
-  renderTestGrid(); renderStats();
-});
 
 /* ===================== DATA: UPDATE STATUS MATRIX ===================== */
 const freqDays = {'2 недели':14, 'квартал':90, '1-2 месяца':45};
@@ -855,10 +692,6 @@ document.addEventListener('click', (e)=>{
 
 (async function init(){
   const ok = await loadLiveData_();
-  try{
-    const saved = await storeGet('adjoe_tests_custom');
-    if(saved) customTests = JSON.parse(saved);
-  }catch(e){ customTests = []; }
   if(ok){
     renderTestGrid();
     renderStats();
