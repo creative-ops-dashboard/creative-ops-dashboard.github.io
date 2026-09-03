@@ -267,7 +267,7 @@
   </div>
   <p class="kicker">Creative Ops · Word Games</p>
   <h1>Панель креативов</h1>
-  <p class="sub">A/B-тесты и ротация креативов Adjoe, статус обновления по остальным медиа-сорсам и требования к форматам — в одном месте.</p>
+  <p class="sub">A/B-тесты и ротация креативов Adjoe, статус обновления по остальным медиа-сорсам.</p>
 </header>
 
 <nav class="tabs">
@@ -287,7 +287,7 @@
     </div>
 
     <div class="note">
-      <b>Кликните по любому креативу</b> — откроется карточка с полной историей по всем тестам, где он участвовал. <b>Метрики:</b> IPM, Installs, CTR, IR — реальные данные из Adjoe DSP Reporting API (лист «creatives», Шаг 1). У идущих сейчас тестов метрик ещё нет — данные появятся, когда тест закроется. ROAS d3 — по каждому периоду отдельно, вписывается вручную из AppsFlyer в таблицу (может отсутствовать для части периодов). Превью — реальные файлы из папок Adjoe на Google Диске.
+      <b>Кликните по любому креативу</b> — откроется карточка с полной историей по всем тестам, где он участвовал. <b>Метрики:</b> IPM, Installs, CTR, IR — реальные данные из Adjoe DSP Reporting API. У идущих сейчас тестов метрик ещё нет — данные появятся, когда тест закроется. ROAS d3 — по каждому периоду отдельно, вписывается из AppsFlyer в таблицу.
     </div>
 
     <div id="liveLoadState" class="note">Загружаю данные из таблицы…</div>
@@ -541,7 +541,6 @@ function renderTestGrid(){
   curWrap.innerHTML = `
     <div class="subhead" style="margin-top:0;">
       <h3>Идёт сейчас — ${currentPeriod.period}</h3>
-      <span>IPM по дням тянется живьём через AppsFlyer (adjoe_int) с первого дня теста</span>
     </div>
     <div class="big-game-list">
       ${currentPeriod.games.map(bigGameBlockHTML).join('')}
