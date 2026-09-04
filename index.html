@@ -180,9 +180,6 @@
   /* ---- rank timeline ---- */
 
   /* ---- status matrix ---- */
-  .legend{display:flex;gap:18px;margin-bottom:18px;flex-wrap:wrap;}
-  .legend span{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:7px;}
-  .legend i{width:10px;height:10px;border-radius:2px;display:inline-block;}
   .matrix-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel);}
   table.matrix{border-collapse:collapse;width:100%;min-width:1220px;}
   table.matrix th,table.matrix td{padding:10px 11px;border-bottom:1px solid var(--line);font-size:12.5px;text-align:left;white-space:nowrap;}
@@ -193,15 +190,14 @@
   table.matrix tbody tr:hover td.source-col{background:var(--panel-3);}
   .src-name{display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;}
   .src-mini{width:22px;height:22px;flex:none;border-radius:4px;background:linear-gradient(180deg,#e8d3a2,var(--tile));color:var(--tile-ink);font-family:'Fraunces',serif;font-weight:700;font-size:10px;display:flex;align-items:center;justify-content:center;}
+  .src-active-dot{width:8px;height:8px;border-radius:50%;background:var(--good);box-shadow:0 0 0 2px var(--good-dim),0 0 8px 1px rgba(111,207,151,.7);flex:none;}
   .freq{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);}
   .cell-link{
     display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:6px;
     font-family:'IBM Plex Mono',monospace;text-decoration:none;border:1px solid transparent;transition:border-color .12s ease;
+    background:var(--panel-2);color:var(--accent);
   }
   .cell-link:hover{border-color:currentColor;}
-  .cell-link.fresh{background:var(--good-dim);color:var(--good);}
-  .cell-link.warn{background:var(--warn-dim);color:var(--warn);}
-  .cell-link.stale{background:var(--bad-dim);color:var(--bad);}
   .cell-link .ico{font-size:11px;}
   .cell-link .days{font-size:9.5px;opacity:.7;}
   .cell-empty{color:var(--muted-2);font-family:'IBM Plex Mono',monospace;}
@@ -308,15 +304,15 @@
     <div class="view-head">
       <div>
         <h2>Статус обновления креативов по каналам и играм</h2>
-        <p>Клик по дате открывает папку с текущими креативами на Google Диске. Свежесть — относительно заявленной периодичности обновления канала (сегодня: 28.08.2026). Adjoe здесь не участвует — см. первую вкладку.</p>
+        <p>Клик по дате открывает папку с текущими креативами на Google Диске. Adjoe здесь не участвует — см. первую вкладку.</p>
       </div>
-      <input class="search" id="statusSearch" type="text" placeholder="поиск по сорсу…">
-    </div>
-    <div class="legend">
-      <span><i style="background:var(--good)"></i> обновлено вовремя</span>
-      <span><i style="background:var(--warn)"></i> скоро истекает / небольшая просрочка</span>
-      <span><i style="background:var(--bad)"></i> просрочено</span>
-      <span><i style="background:var(--muted-2)"></i> нет данных / не работаем по тайтлу</span>
+      <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+        <label style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);cursor:pointer;">
+          <input type="checkbox" id="activeOnlyFilter" style="accent-color:var(--accent);width:14px;height:14px;">
+          только активные
+        </label>
+        <input class="search" id="statusSearch" type="text" placeholder="поиск по сорсу…">
+      </div>
     </div>
     <div class="matrix-wrap">
       <table class="matrix" id="matrixTable">
@@ -566,22 +562,21 @@ function renderTestGrid(){
 
 
 /* ===================== DATA: UPDATE STATUS MATRIX ===================== */
-const freqDays = {'2 недели':14, 'квартал':90, '1-2 месяца':45};
 const games = ['WSS','WS','WP','SW','FW','CS','AR','WC','SM','TT'];
 const updateStatus = [
-  {source:'AdJoe', freq:'2 недели', cells:{WSS:['10uRHVgYwLJ43KiFzUYAn5kHp9jYlHRR8','04.03.2026'],WS:['10uRHVgYwLJ43KiFzUYAn5kHp9jYlHRR8','04.03.2026'],WP:['10uRHVgYwLJ43KiFzUYAn5kHp9jYlHRR8','04.03.2026'],SW:['10uRHVgYwLJ43KiFzUYAn5kHp9jYlHRR8','04.03.2026'],FW:['10uRHVgYwLJ43KiFzUYAn5kHp9jYlHRR8','04.03.2026'],CS:['10uRHVgYwLJ43KiFzUYAn5kHp9jYlHRR8','04.03.2026']}},
+  {source:'AdJoe', freq:'2 недели', active:true, cells:{WSS:['10uRHVgYwLJ43KiFzUYAn5kHp9jYlHRR8','04.03.2026'],WS:['10uRHVgYwLJ43KiFzUYAn5kHp9jYlHRR8','04.03.2026'],WP:['10uRHVgYwLJ43KiFzUYAn5kHp9jYlHRR8','04.03.2026'],SW:['10uRHVgYwLJ43KiFzUYAn5kHp9jYlHRR8','04.03.2026'],FW:['10uRHVgYwLJ43KiFzUYAn5kHp9jYlHRR8','04.03.2026'],CS:['10uRHVgYwLJ43KiFzUYAn5kHp9jYlHRR8','04.03.2026']}},
   {source:'Blind Ferret', freq:'квартал', cells:{WS:['1UE4X6YkjUc3RNftnTvw3heDv3DWfa6i1','06.03.2026'],WP:['1QX20qDTF5t2R_rVb8i6S8ytXAzyKivXD','06.03.2026'],SW:['1PfT7cBdQcOjkaAVMkXqSgjgkT_hnH8My','06.03.2026'],FW:['1GPooI5yRfzOe5EHNEiGf4QJ1ApkY9iww','06.03.2026']}},
   {source:'Snakzy', freq:'', cells:{}},
   {source:'AppSamurai', freq:'квартал', cells:{WS:['1kCf03jE5iWA2fdgLTRYicj66OdjwmYLb','04.03.2026'],WP:['15rXLT14vCoOo5WOo1ysX5c9Hp5auxPs1','04.03.2026'],SW:['1xfBS2NxLIQ1aaTJHC5hADixZhuFKrES4','24.06.2026'],FW:['1nuoMYexmhR2kg2QigJmojS2kYmtnm49P','24.06.2026'],CS:['1dzWwy9RGhwKj0bI4tnJT5yI0aSoDya5I','24.06.2026']}},
   {source:'TaurusX', freq:'квартал', cells:{WS:['1dr_wmRTfpY3YOtUdUAvJknCXVSzK101p','04.03.2026'],WP:['1TSElqG3yFdRGNhfvkgdDZPzegTEUpYn1','04.03.2026'],SW:['1VMzzw3xAQEWICGxf3YG_vYCY7TRvugLJ','04.03.2026'],FW:['1TWqHxiwv30aYE782DLbIt_DIjBLFmDVA','04.03.2026']}},
-  {source:'Scrambly', freq:'1-2 месяца', cells:{WS:['1XvaJXAp6lqZLkEVDf3PwfcaOxQGwm2J6','24.06.2026'],WP:['1F7XfCxy6TVQ1AKK5sHgfJ4PdkrsCObRd','24.06.2026'],SW:['1PsHGHBmbb4Du1YmOqjBZKHD5BI-VP2wi','24.06.2026'],FW:['1Aoh1YVc2ANPTvyk5OKkJj0iWVdT2mjEU','24.06.2026'],CS:['1Rz5jkrR34quNDMmUC_EU2ByihRQ-fmzA','24.06.2026']}},
-  {source:'Copper', freq:'квартал', cells:{WSS:['1Hx-e-ZrwWGjsltwkE65gb2l7xLm3GfLq','24.06.2026'],WS:['1QHNe5JnqlkfyA66V0WyLjM8I6W0blU72','24.06.2026'],WP:['1aIi-hAES1j8NwEBPXXkKm-xuzF3IcIMf','24.06.2026'],SW:['11N0WCR74WvAU4w5noZRiy9_LSYCrIWiE','24.06.2026']}},
-  {source:'Adwake', freq:'квартал', cells:{WSS:['1_D74fP6xEUWfeCv-5yp9QFOCELA6cczQ','24.06.2026'],WS:['1-itlc4JH2685wUetWTvfsAzdsle1Orpr','24.06.2026'],WP:['1k06UGxXWCrBgfjbucw7Q0c1T-fnvHe17','24.06.2026'],SW:['1X1fLRvo47nb9l86BYB0oiNeFJLcFubJi','24.06.2026'],FW:['1gN68_rvb5zEze95vQDU0btJP9U3GV_hu','24.06.2026'],CS:['1e4zVROgPC3Vzv33WQQBOuPx3kIIGfIwa','24.06.2026']}},
+  {source:'Scrambly', freq:'1-2 месяца', active:true, cells:{WS:['1XvaJXAp6lqZLkEVDf3PwfcaOxQGwm2J6','24.06.2026'],WP:['1F7XfCxy6TVQ1AKK5sHgfJ4PdkrsCObRd','24.06.2026'],SW:['1PsHGHBmbb4Du1YmOqjBZKHD5BI-VP2wi','24.06.2026'],FW:['1Aoh1YVc2ANPTvyk5OKkJj0iWVdT2mjEU','24.06.2026'],CS:['1Rz5jkrR34quNDMmUC_EU2ByihRQ-fmzA','24.06.2026']}},
+  {source:'Copper', freq:'квартал', active:true, cells:{WSS:['1Hx-e-ZrwWGjsltwkE65gb2l7xLm3GfLq','24.06.2026'],WS:['1QHNe5JnqlkfyA66V0WyLjM8I6W0blU72','24.06.2026'],WP:['1aIi-hAES1j8NwEBPXXkKm-xuzF3IcIMf','24.06.2026'],SW:['11N0WCR74WvAU4w5noZRiy9_LSYCrIWiE','24.06.2026']}},
+  {source:'Adwake', freq:'квартал', active:true, cells:{WSS:['1_D74fP6xEUWfeCv-5yp9QFOCELA6cczQ','24.06.2026'],WS:['1-itlc4JH2685wUetWTvfsAzdsle1Orpr','24.06.2026'],WP:['1k06UGxXWCrBgfjbucw7Q0c1T-fnvHe17','24.06.2026'],SW:['1X1fLRvo47nb9l86BYB0oiNeFJLcFubJi','24.06.2026'],FW:['1gN68_rvb5zEze95vQDU0btJP9U3GV_hu','24.06.2026'],CS:['1e4zVROgPC3Vzv33WQQBOuPx3kIIGfIwa','24.06.2026']}},
   {source:'Personaly', freq:'', cells:{}},
   {source:'MAF', freq:'квартал', cells:{WS:['114KYImyveAC7xwnZK5hxJA_mudLmxOgH','27.03.2026'],WP:['1qp3BHx5ivJzCSvt8i2326tT30ohSTWwb','24.03.2025'],SW:['17bMBV0wEISY8vAAApyL127aInucYMyEl','27.03.2026'],FW:['1ziAyQd8Cs84z8oALzq2pqmLckStwDPK6','02.03.2026']}},
-  {source:'Prodege', freq:'квартал', cells:{CS:['1PjJIPDfkd6488Cy8O47PlP1yPzt5anuk','22.06.2026']}},
-  {source:'TyrAds', freq:'', cells:{FW:['1j0S28dvGajiLw5OGg03zzm3cFDfs5DO3','24.06.2026'],CS:['1awaNs4zRiMkm11VMW0PDi8IYgYMjBAtm','24.06.2026']}},
-  {source:'TapJoy', freq:'', cells:{}},
+  {source:'Prodege', freq:'квартал', active:true, cells:{CS:['1PjJIPDfkd6488Cy8O47PlP1yPzt5anuk','22.06.2026']}},
+  {source:'TyrAds', freq:'', active:true, cells:{FW:['1j0S28dvGajiLw5OGg03zzm3cFDfs5DO3','24.06.2026'],CS:['1awaNs4zRiMkm11VMW0PDi8IYgYMjBAtm','24.06.2026']}},
+  {source:'TapJoy', freq:'', active:true, cells:{}},
   {source:'AVOW', freq:'', cells:{WSS:['1-rkSpo3doxPHWpvfvk0RF11NF5YM4RN0','10.08.2026'],WP:['1_zCusIAPNAzulmMnlds-9M4ouLscAKF2','10.08.2026']}},
 ];
 function parseDate(d){ const [dd,mm,yyyy]=d.split('.').map(Number); return new Date(yyyy,mm-1,dd); }
@@ -590,26 +585,28 @@ const TODAY = new Date(2026,7,28);
 function renderMatrix(filter=''){
   const body = document.getElementById('matrixBody');
   body.innerHTML='';
-  updateStatus.filter(r=>r.source.toLowerCase().includes(filter.toLowerCase())).forEach(row=>{
+  const activeOnly = document.getElementById('activeOnlyFilter').checked;
+  updateStatus
+    .filter(r=>r.source.toLowerCase().includes(filter.toLowerCase()))
+    .filter(r=>!activeOnly || r.active)
+    .forEach(row=>{
     const tr = document.createElement('tr');
-    let html = `<td class="source-col"><div class="src-name"><span class="src-mini">${initials(row.source)}</span>${row.source}</div></td>`;
+    const dot = row.active ? '<span class="src-active-dot" title="Активный сорс"></span>' : '';
+    let html = `<td class="source-col"><div class="src-name"><span class="src-mini">${initials(row.source)}</span>${row.source}${dot}</div></td>`;
     html += `<td class="freq">${row.freq||'—'}</td>`;
-    const thresholdBase = freqDays[row.freq] || null;
     games.forEach(g=>{
       const cell = row.cells[g];
       if(!cell){ html += `<td><span class="cell-empty">—</span></td>`; return; }
       const [id,dateStr] = cell;
       const days = Math.round((TODAY-parseDate(dateStr))/86400000);
-      let status='fresh';
-      if(thresholdBase){ if(days>thresholdBase) status='stale'; else if(days>thresholdBase*0.75) status='warn'; }
-      else { status = days>120 ? 'warn' : 'fresh'; }
-      html += `<td><a class="cell-link ${status}" href="https://drive.google.com/drive/folders/${id}" target="_blank" rel="noopener" title="Открыть папку с креативами на Google Диске"><span class="ico">📁</span>${dateStr}<span class="days">${days} дн.</span></a></td>`;
+      html += `<td><a class="cell-link" href="https://drive.google.com/drive/folders/${id}" target="_blank" rel="noopener" title="Открыть папку с креативами на Google Диске"><span class="ico">📁</span>${dateStr}<span class="days">${days} дн.</span></a></td>`;
     });
     tr.innerHTML = html;
     body.appendChild(tr);
   });
 }
 document.getElementById('statusSearch').addEventListener('input', e=>renderMatrix(e.target.value));
+document.getElementById('activeOnlyFilter').addEventListener('change', ()=>renderMatrix(document.getElementById('statusSearch').value));
 
 /* ===================== TABS ===================== */
 document.querySelectorAll('.tab-btn').forEach(btn=>{
