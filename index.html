@@ -229,7 +229,12 @@
   .modal-hero{display:flex;gap:18px;margin-bottom:18px;}
   .modal-hero-img{width:180px;height:180px;flex:none;border-radius:12px;overflow:hidden;background:var(--panel-2);}
   .modal-hero-img img{width:100%;height:100%;object-fit:cover;display:block;}
-  .modal-title{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;color:var(--text);line-height:1.4;word-break:break-word;margin-bottom:8px;}
+  .modal-title{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;color:var(--text);line-height:1.4;word-break:break-word;margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .modal-title-link{color:var(--accent);text-decoration:underline dotted;text-underline-offset:3px;}
+  .modal-title-link:hover{color:var(--tile);}
+  .copy-btn{flex:none;background:var(--panel-2);border:1px solid var(--line);color:var(--muted);border-radius:7px;width:26px;height:26px;font-size:13px;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:color .15s,border-color .15s;}
+  .copy-btn:hover{color:var(--accent);border-color:var(--accent);}
+  .copy-btn.copied{color:var(--good);border-color:var(--good);}
   .modal-tags{display:flex;gap:8px;flex-wrap:wrap;}
   .modal-primary{margin:10px 0 12px;}
   .modal-primary .mp-row{display:flex;gap:10px;flex-wrap:wrap;}
@@ -317,11 +322,9 @@
     <div class="matrix-wrap">
       <table class="matrix" id="matrixTable">
         <thead>
-          <tr>
+          <tr id="matrixHeadRow">
             <th class="source-col">Медиа-сорс</th>
             <th>Периодичность</th>
-            <th>WSS</th><th>WS</th><th>WP</th><th>SW</th><th>FW</th>
-            <th>CS</th><th>AR</th><th>WC</th><th>SM</th><th>TT</th>
           </tr>
         </thead>
         <tbody id="matrixBody"></tbody>
@@ -352,6 +355,9 @@ const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyEb9b7ttrlrb90qcJvl
 let abTests2026 = [];
 let creativeHistory = {};
 const allCreoImages = {};
+const allCreoLinks = {};
+let sourcesData = [];
+let sourceGames = [];
 
 /* сырое число из Sheets (0.1234) -> "12.34%" ; null/undefined остаются null */
 function fmtPct_(v, digits){
@@ -398,7 +404,7 @@ async function loadLiveData_(){
       games: (p.games||[]).map(g=>({
         game: g.game, running: g.running,
         creatives: (g.creatives||[]).map(c=>({
-          name: c.name, status: c.status, img: c.img || null,
+          name: c.name, status: c.status, img: c.img || null, link: c.link || null,
           ios: fmtMetric_(c.ios), gp: fmtMetric_(c.gp)
         }))
       }))
@@ -409,6 +415,10 @@ async function loadLiveData_(){
       if(!creativeHistory[c.name]) creativeHistory[c.name] = [];
       creativeHistory[c.name].push({period:p.period, game:g.game, status:c.status, ios:c.ios, gp:c.gp});
     })));
+
+    sourcesData = (json.sources||[]).map(s=>({source:s.name, freq:s.freq, active:s.active, cells:s.cells||{}}));
+    sourceGames = [];
+    sourcesData.forEach(s=>Object.keys(s.cells).forEach(g=>{ if(!sourceGames.includes(g)) sourceGames.push(g); }));
 
     if(loadingEl) loadingEl.remove();
     return true;
@@ -440,6 +450,7 @@ function metricChips(m){
 
 function creativeRowHTML(c){
   allCreoImages[c.name] = c.img || null;
+  allCreoLinks[c.name] = c.link || null;
   const statusBadge = c.status==='win' ? '<span class="w-tag">🏆 победил</span>'
     : c.status==='lost' ? '<span class="l-tag">проиграл</span>'
     : '<span class="t-tag">идёт тест</span>';
@@ -561,32 +572,26 @@ function renderTestGrid(){
 }
 
 
-/* ===================== DATA: UPDATE STATUS MATRIX ===================== */
-const games = ['WSS','WS','WP','SW','FW','CS','AR','WC','SM','TT'];
-const updateStatus = [
-  {source:'AdJoe', freq:'2 недели', active:true, cells:{WSS:['10uRHVgYwLJ43KiFzUYAn5kHp9jYlHRR8','04.03.2026'],WS:['10uRHVgYwLJ43KiFzUYAn5kHp9jYlHRR8','04.03.2026'],WP:['10uRHVgYwLJ43KiFzUYAn5kHp9jYlHRR8','04.03.2026'],SW:['10uRHVgYwLJ43KiFzUYAn5kHp9jYlHRR8','04.03.2026'],FW:['10uRHVgYwLJ43KiFzUYAn5kHp9jYlHRR8','04.03.2026'],CS:['10uRHVgYwLJ43KiFzUYAn5kHp9jYlHRR8','04.03.2026']}},
-  {source:'Blind Ferret', freq:'квартал', cells:{WS:['1UE4X6YkjUc3RNftnTvw3heDv3DWfa6i1','06.03.2026'],WP:['1QX20qDTF5t2R_rVb8i6S8ytXAzyKivXD','06.03.2026'],SW:['1PfT7cBdQcOjkaAVMkXqSgjgkT_hnH8My','06.03.2026'],FW:['1GPooI5yRfzOe5EHNEiGf4QJ1ApkY9iww','06.03.2026']}},
-  {source:'Snakzy', freq:'', cells:{}},
-  {source:'AppSamurai', freq:'квартал', cells:{WS:['1kCf03jE5iWA2fdgLTRYicj66OdjwmYLb','04.03.2026'],WP:['15rXLT14vCoOo5WOo1ysX5c9Hp5auxPs1','04.03.2026'],SW:['1xfBS2NxLIQ1aaTJHC5hADixZhuFKrES4','24.06.2026'],FW:['1nuoMYexmhR2kg2QigJmojS2kYmtnm49P','24.06.2026'],CS:['1dzWwy9RGhwKj0bI4tnJT5yI0aSoDya5I','24.06.2026']}},
-  {source:'TaurusX', freq:'квартал', cells:{WS:['1dr_wmRTfpY3YOtUdUAvJknCXVSzK101p','04.03.2026'],WP:['1TSElqG3yFdRGNhfvkgdDZPzegTEUpYn1','04.03.2026'],SW:['1VMzzw3xAQEWICGxf3YG_vYCY7TRvugLJ','04.03.2026'],FW:['1TWqHxiwv30aYE782DLbIt_DIjBLFmDVA','04.03.2026']}},
-  {source:'Scrambly', freq:'1-2 месяца', active:true, cells:{WS:['1XvaJXAp6lqZLkEVDf3PwfcaOxQGwm2J6','24.06.2026'],WP:['1F7XfCxy6TVQ1AKK5sHgfJ4PdkrsCObRd','24.06.2026'],SW:['1PsHGHBmbb4Du1YmOqjBZKHD5BI-VP2wi','24.06.2026'],FW:['1Aoh1YVc2ANPTvyk5OKkJj0iWVdT2mjEU','24.06.2026'],CS:['1Rz5jkrR34quNDMmUC_EU2ByihRQ-fmzA','24.06.2026']}},
-  {source:'Copper', freq:'квартал', active:true, cells:{WSS:['1Hx-e-ZrwWGjsltwkE65gb2l7xLm3GfLq','24.06.2026'],WS:['1QHNe5JnqlkfyA66V0WyLjM8I6W0blU72','24.06.2026'],WP:['1aIi-hAES1j8NwEBPXXkKm-xuzF3IcIMf','24.06.2026'],SW:['11N0WCR74WvAU4w5noZRiy9_LSYCrIWiE','24.06.2026']}},
-  {source:'Adwake', freq:'квартал', active:true, cells:{WSS:['1_D74fP6xEUWfeCv-5yp9QFOCELA6cczQ','24.06.2026'],WS:['1-itlc4JH2685wUetWTvfsAzdsle1Orpr','24.06.2026'],WP:['1k06UGxXWCrBgfjbucw7Q0c1T-fnvHe17','24.06.2026'],SW:['1X1fLRvo47nb9l86BYB0oiNeFJLcFubJi','24.06.2026'],FW:['1gN68_rvb5zEze95vQDU0btJP9U3GV_hu','24.06.2026'],CS:['1e4zVROgPC3Vzv33WQQBOuPx3kIIGfIwa','24.06.2026']}},
-  {source:'Personaly', freq:'', cells:{}},
-  {source:'MAF', freq:'квартал', cells:{WS:['114KYImyveAC7xwnZK5hxJA_mudLmxOgH','27.03.2026'],WP:['1qp3BHx5ivJzCSvt8i2326tT30ohSTWwb','24.03.2025'],SW:['17bMBV0wEISY8vAAApyL127aInucYMyEl','27.03.2026'],FW:['1ziAyQd8Cs84z8oALzq2pqmLckStwDPK6','02.03.2026']}},
-  {source:'Prodege', freq:'квартал', active:true, cells:{CS:['1PjJIPDfkd6488Cy8O47PlP1yPzt5anuk','22.06.2026']}},
-  {source:'TyrAds', freq:'', active:true, cells:{FW:['1j0S28dvGajiLw5OGg03zzm3cFDfs5DO3','24.06.2026'],CS:['1awaNs4zRiMkm11VMW0PDi8IYgYMjBAtm','24.06.2026']}},
-  {source:'TapJoy', freq:'', active:true, cells:{}},
-  {source:'AVOW', freq:'', cells:{WSS:['1-rkSpo3doxPHWpvfvk0RF11NF5YM4RN0','10.08.2026'],WP:['1_zCusIAPNAzulmMnlds-9M4ouLscAKF2','10.08.2026']}},
-];
+/* ===================== DATA: UPDATE STATUS MATRIX (живые данные из листа "Sources") ===================== */
 function parseDate(d){ const [dd,mm,yyyy]=d.split('.').map(Number); return new Date(yyyy,mm-1,dd); }
-const TODAY = new Date(2026,7,28);
+
+function renderMatrixHead(){
+  const headRow = document.getElementById('matrixHeadRow');
+  while(headRow.children.length > 2) headRow.removeChild(headRow.lastChild);
+  sourceGames.forEach(g=>{
+    const th = document.createElement('th');
+    th.textContent = g;
+    headRow.appendChild(th);
+  });
+}
 
 function renderMatrix(filter=''){
+  renderMatrixHead();
   const body = document.getElementById('matrixBody');
   body.innerHTML='';
   const activeOnly = document.getElementById('activeOnlyFilter').checked;
-  updateStatus
+  const today = new Date();
+  sourcesData
     .filter(r=>r.source.toLowerCase().includes(filter.toLowerCase()))
     .filter(r=>!activeOnly || r.active)
     .forEach(row=>{
@@ -594,12 +599,11 @@ function renderMatrix(filter=''){
     const dot = row.active ? '<span class="src-active-dot" title="Активный сорс"></span>' : '';
     let html = `<td class="source-col"><div class="src-name"><span class="src-mini">${initials(row.source)}</span>${row.source}${dot}</div></td>`;
     html += `<td class="freq">${row.freq||'—'}</td>`;
-    games.forEach(g=>{
+    sourceGames.forEach(g=>{
       const cell = row.cells[g];
       if(!cell){ html += `<td><span class="cell-empty">—</span></td>`; return; }
-      const [id,dateStr] = cell;
-      const days = Math.round((TODAY-parseDate(dateStr))/86400000);
-      html += `<td><a class="cell-link" href="https://drive.google.com/drive/folders/${id}" target="_blank" rel="noopener" title="Открыть папку с креативами на Google Диске"><span class="ico">📁</span>${dateStr}<span class="days">${days} дн.</span></a></td>`;
+      const days = Math.round((today-parseDate(cell.date))/86400000);
+      html += `<td><a class="cell-link" href="${cell.url}" target="_blank" rel="noopener" title="Открыть папку с креативами на Google Диске"><span class="ico">📁</span>${cell.date}<span class="days">${days} дн.</span></a></td>`;
     });
     tr.innerHTML = html;
     body.appendChild(tr);
@@ -624,6 +628,7 @@ function openCreativeModal(encodedName){
   const name = decodeURIComponent(encodedName);
   const hist = creativeHistory[name] || [];
   const img = allCreoImages[name] || null;
+  const link = allCreoLinks[name] || null;
 
   // "тест, который сейчас рассматривается" — последний тест в истории,
   // где вообще есть хоть какие-то реальные метрики (iOS или GP)
@@ -667,7 +672,7 @@ function openCreativeModal(encodedName){
     <div class="modal-hero">
       ${imgBlock}
       <div>
-        <div class="modal-title">${name}</div>
+        <div class="modal-title">${link?`<a class="modal-title-link" href="${link}" target="_blank" rel="noopener" title="Открыть на общем Диске">${name}</a>`:name}<button class="copy-btn" data-copy="${encodeURIComponent(name)}" title="Скопировать имя креатива" aria-label="Скопировать имя креатива">⧉</button></div>
         ${currentTest?`
           <div class="modal-primary">
             <div class="mp-row">
@@ -699,6 +704,16 @@ document.getElementById('modalClose').addEventListener('click', closeCreativeMod
 document.getElementById('creoModal').addEventListener('click', (e)=>{ if(e.target.id==='creoModal') closeCreativeModal(); });
 document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeCreativeModal(); });
 document.addEventListener('click', (e)=>{
+  const copyBtn = e.target.closest('.copy-btn');
+  if(copyBtn){
+    const text = decodeURIComponent(copyBtn.dataset.copy);
+    navigator.clipboard.writeText(text).then(()=>{
+      copyBtn.classList.add('copied');
+      copyBtn.textContent = '✓';
+      setTimeout(()=>{ copyBtn.classList.remove('copied'); copyBtn.textContent = '⧉'; }, 1200);
+    });
+    return;
+  }
   const card = e.target.closest('[data-creo]');
   if(card){ openCreativeModal(card.dataset.creo); }
 });
