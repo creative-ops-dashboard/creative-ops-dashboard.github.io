@@ -481,6 +481,7 @@ function creativeRowHTML(c){
 /* ---- BIG cards for the currently running test — метрик у них нет (тест ещё идёт), показываем только статус ---- */
 function bigCreoCardHTML(c){
   allCreoImages[c.name] = c.img || null;
+  allCreoLinks[c.name] = c.link || null;
   const imgBlock = c.img
     ? `<div class="big-img"><img src="${c.img}" loading="lazy" alt="${c.name}" onerror="this.parentElement.innerHTML='<div class=no-img><div class=placeholder-tile>${c.name.slice(0,2)}</div>нет превью</div>'"></div>`
     : `<div class="big-img"><div class="no-img"><div class="placeholder-tile">${c.name.slice(0,2)}</div>нет превью</div></div>`;
