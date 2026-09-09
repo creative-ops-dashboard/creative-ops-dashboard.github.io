@@ -167,6 +167,13 @@
   .test-body{padding:14px 16px 16px;}
   .test-top{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
   .game-pill{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:11.5px;padding:3px 9px;border-radius:5px;background:var(--panel-2);color:var(--accent);}
+  .title-filter{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 20px;}
+  .title-chip{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:11.5px;padding:6px 13px;border-radius:7px;
+    background:var(--panel-2);color:var(--muted);border:1px solid var(--line);cursor:pointer;transition:all .12s ease;appearance:none;}
+  .title-chip:hover{color:var(--text);border-color:var(--accent-dim);}
+  .title-chip.active{background:rgba(242,153,74,.15);color:var(--accent);border-color:var(--accent-dim);}
+  .title-chip.clear{color:var(--muted-2);border-style:dashed;}
+  .title-chip.clear:hover{color:var(--bad);border-color:var(--bad);}
   .period-tag{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--muted);}
   .plat-row{display:flex;gap:16px;margin-bottom:10px;}
   .plat{font-size:12px;display:flex;flex-direction:column;gap:2px;}
@@ -301,6 +308,7 @@
       <h3>Прошлые тесты</h3>
       <span>свёрнуты — раскрывайте нужный период</span>
     </div>
+    <div class="title-filter" id="titleFilterBar"></div>
     <div id="pastTestsSection"></div>
   </section>
 
@@ -539,10 +547,12 @@ function renderStats(){
   document.getElementById('cnt-adjoe').textContent = total + ' тестов';
 }
 
+let allTitles = [];
+let activeTitleFilter = new Set();
+
 function renderTestGrid(){
   const periods = [...abTests2026];
   const currentPeriod = periods[periods.length-1]; // last = most recent = running
-  const pastPeriods = periods.slice(0,-1).reverse(); // most recent past first
 
   /* ---- current, big & visible ---- */
   const curWrap = document.getElementById('currentTestSection');
@@ -555,9 +565,40 @@ function renderTestGrid(){
     </div>
   `;
 
-  /* ---- past, collapsed accordion ---- */
+  /* ---- фильтр по тайтлам: собираем список из всех периодов один раз ---- */
+  allTitles = [];
+  periods.forEach(p=>p.games.forEach(g=>{ if(!allTitles.includes(g.game)) allTitles.push(g.game); }));
+
+  renderTitleFilterBar();
+  renderPastTests();
+}
+
+function renderTitleFilterBar(){
+  const bar = document.getElementById('titleFilterBar');
+  if(!bar) return;
+  const chips = allTitles.map(g=>
+    `<button class="title-chip ${activeTitleFilter.has(g)?'active':''}" data-title="${g}">${g}</button>`
+  ).join('');
+  const clearChip = activeTitleFilter.size
+    ? `<button class="title-chip clear" data-title="__clear__">✕ показать все</button>`
+    : '';
+  bar.innerHTML = chips + clearChip;
+}
+
+/* ---- past, collapsed accordion — фильтруется по activeTitleFilter (пусто = показать всё) ---- */
+function renderPastTests(){
+  const periods = [...abTests2026];
+  const pastPeriods = periods.slice(0,-1).reverse(); // most recent past first
+
+  const filtered = pastPeriods
+    .map(p => ({
+      period: p.period,
+      games: activeTitleFilter.size ? p.games.filter(g=>activeTitleFilter.has(g.game)) : p.games
+    }))
+    .filter(p => p.games.length);
+
   const pastWrap = document.getElementById('pastTestsSection');
-  let html = pastPeriods.map(p => `
+  pastWrap.innerHTML = filtered.map(p => `
     <details class="period-accordion">
       <summary>
         <span class="period-dot"></span>
@@ -569,8 +610,18 @@ function renderTestGrid(){
       </div>
     </details>
   `).join('');
-  pastWrap.innerHTML = html;
 }
+
+document.addEventListener('click', (e)=>{
+  const chip = e.target.closest('.title-chip');
+  if(!chip) return;
+  const g = chip.dataset.title;
+  if(g === '__clear__'){ activeTitleFilter.clear(); }
+  else if(activeTitleFilter.has(g)){ activeTitleFilter.delete(g); }
+  else { activeTitleFilter.add(g); }
+  renderTitleFilterBar();
+  renderPastTests();
+});
 
 
 /* ===================== DATA: UPDATE STATUS MATRIX (живые данные из листа "Sources") ===================== */
