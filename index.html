@@ -131,7 +131,7 @@
 
   .test-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;}
   .test-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;position:relative;}
-  .test-card.wide{grid-column:span 1;}
+  .test-card.wide{grid-column:1/-1;}
   @media(min-width:900px){ .test-grid{grid-template-columns:repeat(auto-fill,minmax(420px,1fr));} }
   .test-card.running{border-color:var(--warn-dim);}
   .running-flag{font-size:11px;font-weight:700;color:var(--warn);text-transform:uppercase;letter-spacing:.04em;}
@@ -167,13 +167,57 @@
   .test-body{padding:14px 16px 16px;}
   .test-top{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
   .game-pill{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:11.5px;padding:3px 9px;border-radius:5px;background:var(--panel-2);color:var(--accent);}
-  .title-filter{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 20px;}
-  .title-chip{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:11.5px;padding:6px 13px;border-radius:7px;
-    background:var(--panel-2);color:var(--muted);border:1px solid var(--line);cursor:pointer;transition:all .12s ease;appearance:none;}
-  .title-chip:hover{color:var(--text);border-color:var(--accent-dim);}
-  .title-chip.active{background:rgba(242,153,74,.15);color:var(--accent);border-color:var(--accent-dim);}
-  .title-chip.clear{color:var(--muted-2);border-style:dashed;}
-  .title-chip.clear:hover{color:var(--bad);border-color:var(--bad);}
+
+  /* сравнительная таблица прошлого теста (вместо стопки карточек) */
+  .cmp-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
+  .cmp-scroll{overflow-x:auto;}
+  table.cmp{border-collapse:collapse;width:100%;min-width:760px;}
+  table.cmp th, table.cmp td{padding:0;}
+  .cmp .plat-head th{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+    text-align:center;color:var(--muted-2);padding:10px 4px 2px;}
+  .cmp .plat-head th.ios-h{color:#8fb3d9;}
+  .cmp .plat-head th.gp-h{color:#8fd9a8;}
+  .cmp .metric-head th{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:var(--muted);
+    text-align:right;padding:0 12px 9px;border-bottom:1px solid var(--line);white-space:nowrap;}
+  .cmp .metric-head th.creo-col{text-align:left;padding-left:16px;color:var(--muted-2);text-transform:uppercase;letter-spacing:.08em;}
+  .cmp .metric-head th.grp-start, .cmp td.metric.grp-start{border-left:1px solid var(--line);}
+  .cmp tr.row{cursor:pointer;transition:background .12s ease;}
+  .cmp tr.row:hover{background:var(--panel-2);}
+  .cmp tr.row td{border-bottom:1px solid var(--line);}
+  .cmp tr.row:last-child td{border-bottom:none;}
+  .cmp tr.row td.creo-col{padding:10px 12px 10px 16px;position:relative;}
+  .cmp tr.row.winner td.creo-col::before{content:"";position:absolute;left:0;top:6px;bottom:6px;width:3px;border-radius:2px;background:var(--good);}
+  .cmp .creo-id{display:flex;align-items:center;gap:10px;}
+  .cmp-thumb{width:30px;height:30px;border-radius:6px;flex:none;object-fit:cover;display:block;}
+  .cmp-thumb.ph{display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;font-size:11px;
+    background:linear-gradient(180deg,#3a4152,#2b3140);color:var(--muted-2);}
+  .cmp .creo-name{font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:var(--text);line-height:1.3;white-space:normal;}
+  .cmp .creo-status{display:block;font-size:10px;font-weight:600;margin-top:2px;}
+  .cmp tr.winner .creo-status{color:var(--good);}
+  .cmp tr.loser .creo-status{color:var(--muted-2);}
+  .cmp td.metric{text-align:right;padding:10px 12px;}
+  .cmp .metric-val{font-size:12px;color:var(--text);}
+  .cmp .metric-val.best{color:var(--accent);font-weight:700;}
+  .cmp .metric-val.muted{color:var(--muted-2);}
+
+  .past-tests-toolbar{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;}
+  .title-filter-dd{position:relative;flex:none;margin-top:8px;}
+  .filter-dd-btn{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:12px;padding:8px 14px;border-radius:8px;
+    background:var(--panel-2);color:var(--text);border:1px solid var(--line);cursor:pointer;
+    display:flex;align-items:center;gap:8px;white-space:nowrap;appearance:none;}
+  .filter-dd-btn:hover{border-color:var(--accent-dim);}
+  .filter-dd-btn .count{background:var(--accent);color:#1a1207;border-radius:20px;padding:1px 7px;font-size:10.5px;font-weight:700;}
+  .filter-dd-panel{display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--panel);border:1px solid var(--line);
+    border-radius:10px;padding:10px;min-width:200px;box-shadow:0 12px 30px rgba(0,0,0,.45);z-index:20;}
+  .filter-dd-panel.open{display:block;}
+  .filter-dd-panel .opt{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:6px;cursor:pointer;
+    font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);}
+  .filter-dd-panel .opt:hover{background:var(--panel-2);color:var(--text);}
+  .filter-dd-panel .opt input{accent-color:var(--accent);width:14px;height:14px;flex:none;}
+  .filter-dd-panel .opt.active{color:var(--accent);}
+  .filter-dd-panel .dd-clear{margin-top:6px;padding-top:8px;border-top:1px solid var(--line);text-align:center;
+    font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted-2);cursor:pointer;}
+  .filter-dd-panel .dd-clear:hover{color:var(--bad);}
   .period-tag{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--muted);}
   .plat-row{display:flex;gap:16px;margin-bottom:10px;}
   .plat{font-size:12px;display:flex;flex-direction:column;gap:2px;}
@@ -304,11 +348,16 @@
 
     <div id="currentTestSection"></div>
 
-    <div class="subhead" style="margin-top:8px;">
-      <h3>Прошлые тесты</h3>
-      <span>свёрнуты — раскрывайте нужный период</span>
+    <div class="past-tests-toolbar">
+      <div class="subhead" style="margin-top:8px;">
+        <h3>Прошлые тесты</h3>
+        <span>свёрнуты — раскрывайте нужный период</span>
+      </div>
+      <div class="title-filter-dd" id="titleFilterDd">
+        <button class="filter-dd-btn" id="titleFilterBtn" type="button">Тайтлы: все ▾</button>
+        <div class="filter-dd-panel" id="titleFilterPanel"></div>
+      </div>
     </div>
-    <div class="title-filter" id="titleFilterBar"></div>
     <div id="pastTestsSection"></div>
   </section>
 
@@ -444,46 +493,43 @@ async function loadLiveData_(){
 
 function fmtNum_(v){ return v==null? null : Number(v).toLocaleString('en-US'); }
 
-/* Метрики: IPM/Installs/CTR/IR из Adjoe (по платформе) + ROAS d3 из AppsFlyer (общий, добавляется в конце строки) */
-function metricChips(m){
-  if(!m) return '';
-  const chips = [];
-  if(m.ipm) chips.push(`<span class="ipm-tag">IPM ${m.ipm}</span>`);
-  if(m.installs!=null) chips.push(`<span class="ipm-tag">${fmtNum_(m.installs)} инст.</span>`);
-  if(m.ctr) chips.push(`<span class="ipm-tag">CTR ${m.ctr}</span>`);
-  if(m.ir) chips.push(`<span class="ipm-tag">IR ${m.ir}</span>`);
-  if(m.roas3) chips.push(`<span class="ipm-tag">ROAS d3 ${m.roas3}</span>`);
-  return chips.join('');
-}
+/* только эти две метрики подсвечиваются акцентом как "лучшее значение в колонке" */
+const CMP_HIGHLIGHT = ['ipm','roas3'];
 
-function creativeRowHTML(c){
+function creoCmpRowHTML(c, idx, bestByMetric){
   allCreoImages[c.name] = c.img || null;
   allCreoLinks[c.name] = c.link || null;
-  const statusBadge = c.status==='win' ? '<span class="w-tag">🏆 победил</span>'
-    : c.status==='lost' ? '<span class="l-tag">проиграл</span>'
-    : '<span class="t-tag">идёт тест</span>';
-  const imgBlock = c.img
-    ? `<div class="imgcell"><img src="${c.img}" loading="lazy" alt="${c.name}" onerror="this.parentElement.innerHTML='<div class=no-img><div class=placeholder-tile>${c.name.slice(0,2)}</div>нет превью</div>'"></div>`
-    : `<div class="imgcell"><div class="no-img"><div class="placeholder-tile">${c.name.slice(0,2)}</div>нет превью</div></div>`;
-  // у идущих сейчас тестов метрик ещё нет — показываем только статус, без чипов
-  const metricsBlock = c.status==='test' ? '' : `
-        <div class="creo-meta-row">
-          <span class="plat-mini">iOS</span>${metricChips(c.ios) || '<span class="t-tag">нет данных</span>'}
-        </div>
-        <div class="creo-meta-row">
-          <span class="plat-mini">GP</span>${metricChips(c.gp) || '<span class="t-tag">нет данных</span>'}
-        </div>`;
+
+  const thumb = c.img
+    ? `<img class="cmp-thumb" src="${c.img}" loading="lazy" alt="${c.name}" onerror="this.outerHTML='<span class=&quot;cmp-thumb ph&quot;>${c.name.slice(0,2)}</span>'">`
+    : `<span class="cmp-thumb ph">${c.name.slice(0,2)}</span>`;
+
+  const rowClass = c.status==='win' ? 'winner' : (c.status==='lost' ? 'loser' : '');
+  const statusLabel = c.status==='win' ? '🏆 победил' : (c.status==='lost' ? 'проиграл' : 'идёт тест');
+
+  function metricCell(plat, key){
+    const gs = (plat==='gp' && key==='ipm') ? ' grp-start' : '';
+    const mm = c[plat];
+    if(!mm || mm[key]==null) return `<td class="metric${gs}"><span class="metric-val muted">—</span></td>`;
+    const display = key==='installs' ? (fmtNum_(mm.installs) ?? '—') : mm[key];
+    const isBest = CMP_HIGHLIGHT.includes(key) && bestByMetric[plat+'_'+key] === idx;
+    return `<td class="metric${gs}"><span class="metric-val ${isBest?'best':''}">${display}</span></td>`;
+  }
+
   return `
-    <div class="creo-row ${c.status}" data-creo="${encodeURIComponent(c.name)}">
-      ${imgBlock}
-      <div class="creo-info">
-        <div class="creo-name" title="${c.name}">${c.name}</div>
-        <div class="creo-meta">
-          ${statusBadge}
+    <tr class="row ${rowClass}" data-creo="${encodeURIComponent(c.name)}">
+      <td class="creo-col">
+        <div class="creo-id">
+          ${thumb}
+          <span>
+            <span class="creo-name">${c.name}</span>
+            <span class="creo-status">${statusLabel}</span>
+          </span>
         </div>
-        ${metricsBlock}
-      </div>
-    </div>`;
+      </td>
+      ${metricCell('ios','ipm')}${metricCell('ios','installs')}${metricCell('ios','ctr')}${metricCell('ios','roas3')}
+      ${metricCell('gp','ipm')}${metricCell('gp','installs')}${metricCell('gp','ctr')}${metricCell('gp','roas3')}
+    </tr>`;
 }
 
 /* ---- BIG cards for the currently running test — метрик у них нет (тест ещё идёт), показываем только статус ---- */
@@ -515,16 +561,45 @@ function bigGameBlockHTML(g){
 
 function gameCardHTML(t){
   const winner = t.creatives.find(c=>c.status==='win');
+
+  /* лучшее значение IPM / ROAS d3 в каждой колонке (iOS и GP отдельно) — для подсветки акцентом */
+  const bestByMetric = {};
+  ['ios','gp'].forEach(plat=>{
+    CMP_HIGHLIGHT.forEach(m=>{
+      let best = -Infinity, bestIdx = -1;
+      t.creatives.forEach((c,i)=>{
+        const mm = c[plat];
+        const v = (mm && mm[m]!=null) ? parseFloat(mm[m]) : null;
+        if(v!=null && v > best){ best = v; bestIdx = i; }
+      });
+      bestByMetric[plat+'_'+m] = bestIdx;
+    });
+  });
+
+  const rows = t.creatives.map((c,i)=>creoCmpRowHTML(c, i, bestByMetric)).join('');
+
   return `
     <div class="test-card wide ${t.running?'running':''}">
-      <div class="test-body">
-        <div class="test-top">
-          <span class="game-pill">${t.game}</span>
-          ${t.running?'<span class="running-flag">● тест идёт</span>':(winner?`<span class="winner-flag">победил: ${winner.name}</span>`:'')}
-        </div>
-        <div class="creo-list">
-          ${t.creatives.map(creativeRowHTML).join('')}
-        </div>
+      <div class="cmp-head">
+        <span class="game-pill">${t.game}</span>
+        ${t.running?'<span class="running-flag">● тест идёт</span>':(winner?`<span class="winner-flag">победил: ${winner.name}</span>`:'')}
+      </div>
+      <div class="cmp-scroll">
+        <table class="cmp">
+          <thead>
+            <tr class="plat-head">
+              <th class="creo-col"></th>
+              <th class="ios-h" colspan="4">iOS</th>
+              <th class="gp-h" colspan="4">Google Play</th>
+            </tr>
+            <tr class="metric-head">
+              <th class="creo-col">Креатив</th>
+              <th>IPM</th><th>Инст.</th><th>CTR</th><th>ROAS d3</th>
+              <th class="grp-start">IPM</th><th>Инст.</th><th>CTR</th><th>ROAS d3</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
       </div>
     </div>
   `;
@@ -574,15 +649,19 @@ function renderTestGrid(){
 }
 
 function renderTitleFilterBar(){
-  const bar = document.getElementById('titleFilterBar');
-  if(!bar) return;
-  const chips = allTitles.map(g=>
-    `<button class="title-chip ${activeTitleFilter.has(g)?'active':''}" data-title="${g}">${g}</button>`
-  ).join('');
-  const clearChip = activeTitleFilter.size
-    ? `<button class="title-chip clear" data-title="__clear__">✕ показать все</button>`
-    : '';
-  bar.innerHTML = chips + clearChip;
+  const btn = document.getElementById('titleFilterBtn');
+  const panel = document.getElementById('titleFilterPanel');
+  if(!btn || !panel) return;
+
+  const n = activeTitleFilter.size;
+  btn.innerHTML = n ? `Тайтлы <span class="count">${n}</span> ▾` : `Тайтлы: все ▾`;
+
+  const opts = allTitles.map(g=>{
+    const checked = activeTitleFilter.has(g);
+    return `<label class="opt ${checked?'active':''}"><input type="checkbox" data-title="${g}" ${checked?'checked':''}> ${g}</label>`;
+  }).join('');
+  const clear = n ? `<div class="dd-clear" data-action="clear">✕ показать все</div>` : '';
+  panel.innerHTML = opts + clear;
 }
 
 /* ---- past, collapsed accordion — фильтруется по activeTitleFilter (пусто = показать всё) ---- */
@@ -612,13 +691,25 @@ function renderPastTests(){
   `).join('');
 }
 
+document.getElementById('titleFilterBtn').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  document.getElementById('titleFilterPanel').classList.toggle('open');
+});
 document.addEventListener('click', (e)=>{
-  const chip = e.target.closest('.title-chip');
-  if(!chip) return;
-  const g = chip.dataset.title;
-  if(g === '__clear__'){ activeTitleFilter.clear(); }
-  else if(activeTitleFilter.has(g)){ activeTitleFilter.delete(g); }
-  else { activeTitleFilter.add(g); }
+  const dd = document.getElementById('titleFilterDd');
+  if(dd && !dd.contains(e.target)) document.getElementById('titleFilterPanel').classList.remove('open');
+});
+document.addEventListener('change', (e)=>{
+  if(!e.target.matches('#titleFilterPanel input[type="checkbox"]')) return;
+  const g = e.target.dataset.title;
+  if(e.target.checked) activeTitleFilter.add(g); else activeTitleFilter.delete(g);
+  renderTitleFilterBar();
+  renderPastTests();
+  document.getElementById('titleFilterPanel').classList.add('open'); // не закрывать панель при выборе
+});
+document.addEventListener('click', (e)=>{
+  if(!e.target.closest('.dd-clear')) return;
+  activeTitleFilter.clear();
   renderTitleFilterBar();
   renderPastTests();
 });
