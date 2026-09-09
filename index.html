@@ -300,6 +300,8 @@
   table.hist-table{width:100%;border-collapse:collapse;}
   table.hist-table th,table.hist-table td{padding:8px 10px;border-bottom:1px solid var(--line);font-size:12px;text-align:left;}
   table.hist-table th{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;color:var(--muted);letter-spacing:.04em;}
+  table.hist-table tr.is-open-from td{background:rgba(242,153,74,.08);position:relative;}
+  table.hist-table tr.is-open-from td:first-child::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);}
   .modal-note{font-size:11.5px;color:var(--muted-2);line-height:1.5;margin-top:8px;}
   .mm-cell{display:flex;flex-direction:column;gap:1px;}
   .mm-label{font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted-2);}
@@ -493,7 +495,7 @@ function fmtNum_(v){ return v==null? null : Number(v).toLocaleString('en-US'); }
 /* только эти две метрики подсвечиваются акцентом как "лучшее значение в колонке" */
 const CMP_HIGHLIGHT = ['ipm','roas3'];
 
-function creoCmpRowHTML(c, idx, bestByMetric){
+function creoCmpRowHTML(c, idx, bestByMetric, period){
   allCreoImages[c.name] = c.img || null;
   allCreoLinks[c.name] = c.link || null;
 
@@ -514,7 +516,7 @@ function creoCmpRowHTML(c, idx, bestByMetric){
   }
 
   return `
-    <tr class="row ${rowClass}" data-creo="${encodeURIComponent(c.name)}">
+    <tr class="row ${rowClass}" data-creo="${encodeURIComponent(c.name)}" data-period="${period}">
       <td class="creo-col">
         <div class="creo-id">
           ${thumb}
@@ -530,14 +532,14 @@ function creoCmpRowHTML(c, idx, bestByMetric){
 }
 
 /* ---- BIG cards for the currently running test — метрик у них нет (тест ещё идёт), показываем только статус ---- */
-function bigCreoCardHTML(c){
+function bigCreoCardHTML(c, period){
   allCreoImages[c.name] = c.img || null;
   allCreoLinks[c.name] = c.link || null;
   const imgBlock = c.img
     ? `<div class="big-img"><img src="${c.img}" loading="lazy" alt="${c.name}" onerror="this.parentElement.innerHTML='<div class=no-img><div class=placeholder-tile>${c.name.slice(0,2)}</div>нет превью</div>'"></div>`
     : `<div class="big-img"><div class="no-img"><div class="placeholder-tile">${c.name.slice(0,2)}</div>нет превью</div></div>`;
   return `
-    <div class="big-creo-card" data-creo="${encodeURIComponent(c.name)}">
+    <div class="big-creo-card" data-creo="${encodeURIComponent(c.name)}" data-period="${period}">
       ${imgBlock}
       <div class="big-creo-body">
         <div class="creo-name" title="${c.name}">${c.name}</div>
@@ -546,17 +548,17 @@ function bigCreoCardHTML(c){
     </div>`;
 }
 
-function bigGameBlockHTML(g){
+function bigGameBlockHTML(g, period){
   return `
     <div class="big-game-block">
       <div class="big-game-head"><span class="game-pill">${g.game}</span><span class="running-flag">● тест идёт</span></div>
       <div class="big-creo-grid">
-        ${g.creatives.map(bigCreoCardHTML).join('')}
+        ${g.creatives.map(c=>bigCreoCardHTML(c, period)).join('')}
       </div>
     </div>`;
 }
 
-function gameCardHTML(t){
+function gameCardHTML(t, period){
   const winner = t.creatives.find(c=>c.status==='win');
 
   /* лучшее значение IPM / ROAS d3 в каждой колонке (iOS и GP отдельно) — для подсветки акцентом */
@@ -573,7 +575,7 @@ function gameCardHTML(t){
     });
   });
 
-  const rows = t.creatives.map((c,i)=>creoCmpRowHTML(c, i, bestByMetric)).join('');
+  const rows = t.creatives.map((c,i)=>creoCmpRowHTML(c, i, bestByMetric, period)).join('');
 
   return `
     <div class="test-card wide ${t.running?'running':''}">
@@ -646,7 +648,7 @@ function renderCurrentTest(){
       <h3>Идёт сейчас — ${currentPeriod.period}</h3>
     </div>
     <div class="big-game-list">
-      ${games.map(bigGameBlockHTML).join('')}
+      ${games.map(g=>bigGameBlockHTML(g, currentPeriod.period)).join('')}
     </div>
   `;
 }
@@ -688,7 +690,7 @@ function renderPastTests(){
         <span class="period-count">${p.games.length} ${p.games.length===1?'игра':'игр'}</span>
       </summary>
       <div class="test-grid">
-        ${p.games.map(gameCardHTML).join('')}
+        ${p.games.map(g=>gameCardHTML(g, p.period)).join('')}
       </div>
     </details>
   `).join('');
@@ -772,18 +774,29 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
 
 /* ===================== INIT ===================== */
 /* ===================== CREATIVE DETAIL MODAL ===================== */
-function openCreativeModal(encodedName){
+function openCreativeModal(encodedName, clickedPeriod){
   const name = decodeURIComponent(encodedName);
   const hist = creativeHistory[name] || [];
   const img = allCreoImages[name] || null;
   const link = allCreoLinks[name] || null;
 
-  // "тест, который сейчас рассматривается" — последний тест в истории,
-  // где вообще есть хоть какие-то реальные метрики (iOS или GP)
+  // "тест, который сейчас рассматривается" наверху карточки — это ТОТ САМЫЙ тест,
+  // из карточки которого кликнули (clickedPeriod), а не всегда последний по времени:
+  // иначе, открыв креатив из старого периода, наверху видно данные новее свежего
+  // теста, что читается как "он победил вот с этим результатом" — и вводит в заблуждение.
   let currentTest = null;
-  for(let i=hist.length-1; i>=0; i--){
-    const h = hist[i];
-    if((h.ios && h.ios.ipm) || (h.gp && h.gp.ipm)){ currentTest = h; break; }
+  if(clickedPeriod){
+    const clicked = hist.find(h=>h.period===clickedPeriod);
+    if(clicked && ((clicked.ios && clicked.ios.ipm) || (clicked.gp && clicked.gp.ipm))) currentTest = clicked;
+  }
+  // clickedPeriod не передан (страховка) — берём последний тест с реальными метриками,
+  // как раньше. Но если clickedPeriod ЕСТЬ, а данных по нему нет (тест ещё идёт) —
+  // не подставляем чужой период молча, просто не показываем верхний блок вовсе.
+  if(!currentTest && !clickedPeriod){
+    for(let i=hist.length-1; i>=0; i--){
+      const h = hist[i];
+      if((h.ios && h.ios.ipm) || (h.gp && h.gp.ipm)){ currentTest = h; break; }
+    }
   }
 
   function mpBadge(plat, m){
@@ -806,7 +819,7 @@ function openCreativeModal(encodedName){
   }
 
   const histRows = hist.map(h=>`
-    <tr>
+    <tr class="${clickedPeriod && h.period===clickedPeriod?'is-open-from':''}">
       <td>${h.period}</td>
       <td><span class="game-pill">${h.game}</span></td>
       <td>${h.status==='win'?'<span class="w-tag">🏆 победил</span>':h.status==='lost'?'<span class="l-tag">проиграл</span>':'<span class="t-tag">идёт тест</span>'}</td>
@@ -863,7 +876,7 @@ document.addEventListener('click', (e)=>{
     return;
   }
   const card = e.target.closest('[data-creo]');
-  if(card){ openCreativeModal(card.dataset.creo); }
+  if(card){ openCreativeModal(card.dataset.creo, card.dataset.period); }
 });
 
 (async function init(){
