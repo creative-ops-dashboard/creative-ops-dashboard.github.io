@@ -185,13 +185,13 @@
   .cmp tr.row:hover{background:var(--panel-2);}
   .cmp tr.row td{border-bottom:1px solid var(--line);}
   .cmp tr.row:last-child td{border-bottom:none;}
-  .cmp tr.row td.creo-col{padding:10px 12px 10px 16px;position:relative;}
-  .cmp tr.row.winner td.creo-col::before{content:"";position:absolute;left:0;top:6px;bottom:6px;width:3px;border-radius:2px;background:var(--good);}
-  .cmp .creo-id{display:flex;align-items:center;gap:10px;}
-  .cmp-thumb{width:30px;height:30px;border-radius:6px;flex:none;object-fit:cover;display:block;}
-  .cmp-thumb.ph{display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;font-size:11px;
+  .cmp tr.row td.creo-col{padding:12px 12px 12px 16px;position:relative;}
+  .cmp tr.row.winner td.creo-col::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:2px;background:var(--good);}
+  .cmp .creo-id{display:flex;align-items:center;gap:12px;}
+  .cmp-thumb{width:52px;height:52px;border-radius:8px;flex:none;object-fit:cover;display:block;}
+  .cmp-thumb.ph{display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;font-size:16px;
     background:linear-gradient(180deg,#3a4152,#2b3140);color:var(--muted-2);}
-  .cmp .creo-name{font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:var(--text);line-height:1.3;white-space:normal;}
+  .cmp .creo-name{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--text);line-height:1.3;white-space:normal;}
   .cmp .creo-status{display:block;font-size:10px;font-weight:600;margin-top:2px;}
   .cmp tr.winner .creo-status{color:var(--good);}
   .cmp tr.loser .creo-status{color:var(--muted-2);}
@@ -200,8 +200,7 @@
   .cmp .metric-val.best{color:var(--accent);font-weight:700;}
   .cmp .metric-val.muted{color:var(--muted-2);}
 
-  .past-tests-toolbar{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;}
-  .title-filter-dd{position:relative;flex:none;margin-top:8px;}
+  .title-filter-dd{position:relative;flex:none;}
   .filter-dd-btn{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:12px;padding:8px 14px;border-radius:8px;
     background:var(--panel-2);color:var(--text);border:1px solid var(--line);cursor:pointer;
     display:flex;align-items:center;gap:8px;white-space:nowrap;appearance:none;}
@@ -336,6 +335,10 @@
         <h2>Adjoe: оптимизация и A/B-тесты креативов</h2>
         <p>Данные по A/B-тестам — с 22.05.2026 по сегодня, 10 периодов, 55 тестов (лист «creatives», обновляется через Шаг 1/Шаг 2 в Apps Script). Метрики — IPM, Installs, CTR, IR — реальные данные из Adjoe DSP Reporting API. У идущих сейчас тестов метрик ещё нет — только статус «идёт тест». Кликните по любому креативу для полной истории по тестам.</p>
       </div>
+      <div class="title-filter-dd" id="titleFilterDd">
+        <button class="filter-dd-btn" id="titleFilterBtn" type="button">Тайтлы: все ▾</button>
+        <div class="filter-dd-panel" id="titleFilterPanel"></div>
+      </div>
     </div>
 
     <div class="note">
@@ -348,15 +351,9 @@
 
     <div id="currentTestSection"></div>
 
-    <div class="past-tests-toolbar">
-      <div class="subhead" style="margin-top:8px;">
-        <h3>Прошлые тесты</h3>
-        <span>свёрнуты — раскрывайте нужный период</span>
-      </div>
-      <div class="title-filter-dd" id="titleFilterDd">
-        <button class="filter-dd-btn" id="titleFilterBtn" type="button">Тайтлы: все ▾</button>
-        <div class="filter-dd-panel" id="titleFilterPanel"></div>
-      </div>
+    <div class="subhead" style="margin-top:8px;">
+      <h3>Прошлые тесты</h3>
+      <span>свёрнуты — раскрывайте нужный период</span>
     </div>
     <div id="pastTestsSection"></div>
   </section>
@@ -627,25 +624,31 @@ let activeTitleFilter = new Set();
 
 function renderTestGrid(){
   const periods = [...abTests2026];
-  const currentPeriod = periods[periods.length-1]; // last = most recent = running
-
-  /* ---- current, big & visible ---- */
-  const curWrap = document.getElementById('currentTestSection');
-  curWrap.innerHTML = `
-    <div class="subhead" style="margin-top:0;">
-      <h3>Идёт сейчас — ${currentPeriod.period}</h3>
-    </div>
-    <div class="big-game-list">
-      ${currentPeriod.games.map(bigGameBlockHTML).join('')}
-    </div>
-  `;
 
   /* ---- фильтр по тайтлам: собираем список из всех периодов один раз ---- */
   allTitles = [];
   periods.forEach(p=>p.games.forEach(g=>{ if(!allTitles.includes(g.game)) allTitles.push(g.game); }));
 
   renderTitleFilterBar();
+  renderCurrentTest();
   renderPastTests();
+}
+
+/* ---- текущий (идущий сейчас) период — тоже фильтруется по activeTitleFilter ---- */
+function renderCurrentTest(){
+  const periods = [...abTests2026];
+  const currentPeriod = periods[periods.length-1]; // last = most recent = running
+  const games = activeTitleFilter.size ? currentPeriod.games.filter(g=>activeTitleFilter.has(g.game)) : currentPeriod.games;
+
+  const curWrap = document.getElementById('currentTestSection');
+  curWrap.innerHTML = `
+    <div class="subhead" style="margin-top:0;">
+      <h3>Идёт сейчас — ${currentPeriod.period}</h3>
+    </div>
+    <div class="big-game-list">
+      ${games.map(bigGameBlockHTML).join('')}
+    </div>
+  `;
 }
 
 function renderTitleFilterBar(){
@@ -704,6 +707,7 @@ document.addEventListener('change', (e)=>{
   const g = e.target.dataset.title;
   if(e.target.checked) activeTitleFilter.add(g); else activeTitleFilter.delete(g);
   renderTitleFilterBar();
+  renderCurrentTest();
   renderPastTests();
   document.getElementById('titleFilterPanel').classList.add('open'); // не закрывать панель при выборе
 });
@@ -711,6 +715,7 @@ document.addEventListener('click', (e)=>{
   if(!e.target.closest('.dd-clear')) return;
   activeTitleFilter.clear();
   renderTitleFilterBar();
+  renderCurrentTest();
   renderPastTests();
 });
 
