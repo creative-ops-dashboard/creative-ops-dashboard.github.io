@@ -276,6 +276,22 @@
     display:flex;align-items:center;justify-content:center;
   }
   .modal-close:hover{color:var(--bad);border-color:var(--bad);}
+  /* --- навигация между креативами теста --- */
+  .modal-nav{position:fixed;top:50%;transform:translateY(-50%);width:46px;height:46px;border-radius:50%;
+    background:var(--panel-2);border:1px solid var(--line);color:var(--text);cursor:pointer;display:none;
+    align-items:center;justify-content:center;z-index:101;box-shadow:0 8px 24px rgba(0,0,0,.45);transition:border-color .12s,color .12s,opacity .12s;}
+  .modal-nav svg{width:20px;height:20px;}
+  .modal-overlay.open ~ .modal-nav.show{display:flex;}
+  .modal-nav:hover:not(:disabled){border-color:var(--accent);color:var(--accent);}
+  .modal-nav:disabled{opacity:.28;cursor:default;}
+  #modalPrev{left:max(10px,calc(50% - 380px - 64px));}
+  #modalNext{right:max(10px,calc(50% - 380px - 64px));}
+  @media (max-width:900px){
+    .modal-nav{top:auto;bottom:18px;transform:none;}
+    #modalPrev{left:calc(50% - 58px);right:auto;}
+    #modalNext{right:calc(50% - 58px);left:auto;}
+    .modal-overlay{padding-bottom:84px;}
+  }
   .modal-hero{display:flex;gap:18px;margin-bottom:18px;}
   .modal-hero-img{width:240px;height:150px;flex:none;border-radius:12px;overflow:hidden;background:var(--panel-2);}
   .modal-hero-img img{width:100%;height:100%;object-fit:cover;display:block;}
@@ -308,6 +324,17 @@
   .mm-ipm{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13px;color:var(--accent);}
   .mm-line{font-size:10.5px;color:var(--muted);white-space:nowrap;}
   @media (max-width:720px){.tiles-decor{display:none;} table.matrix{min-width:980px;}}
+
+  /* MOBILE_PATCH: карточка креатива на телефоне - картинка сверху, таблица со своей прокруткой */
+  @media (max-width:720px){
+    .modal-overlay{padding:3vh 3vw;}
+    .modal-box{padding:54px 16px 22px;border-radius:14px;}
+    .modal-hero{flex-direction:column;gap:14px;}
+    .modal-hero-img{width:100%;height:auto;aspect-ratio:16/10;}
+    .modal-section{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+    .modal-section h4{font-size:15px;line-height:1.35;}
+    .hist-table{min-width:520px;}
+  }
 </style>
 </head>
 <body>
@@ -395,6 +422,8 @@
     <div id="modalBody"></div>
   </div>
 </div>
+<button class="modal-nav" id="modalPrev" type="button" aria-label="Предыдущий креатив" title="Предыдущий креатив (←)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+<button class="modal-nav" id="modalNext" type="button" aria-label="Следующий креатив" title="Следующий креатив (→)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
 
 </main>
 
@@ -774,8 +803,35 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
 
 /* ===================== INIT ===================== */
 /* ===================== CREATIVE DETAIL MODAL ===================== */
+/* Листание карточек: список креативов берётся из карточек выбранного теста на экране (порядок и фильтр по тайтлам как на странице). */
+let modalNav = {names:[], idx:-1, period:null};
+function buildModalNav_(name, period){
+  modalNav = {names:[], idx:-1, period:period||null};
+  if(!period) return;
+  const names = [];
+  document.querySelectorAll('[data-creo]').forEach(el=>{
+    if(el.dataset.period !== period) return;
+    const n = decodeURIComponent(el.dataset.creo);
+    if(names.indexOf(n) === -1) names.push(n);
+  });
+  const idx = names.indexOf(name);
+  if(idx >= 0) modalNav = {names, idx, period};
+}
+function updateModalNav_(){
+  const prev = document.getElementById('modalPrev'), next = document.getElementById('modalNext');
+  const show = modalNav.idx >= 0 && modalNav.names.length > 1;
+  prev.classList.toggle('show', show); next.classList.toggle('show', show);
+  prev.disabled = !show || modalNav.idx <= 0;
+  next.disabled = !show || modalNav.idx >= modalNav.names.length - 1;
+}
+function goModalNav_(d){
+  if(modalNav.idx < 0) return;
+  const n = modalNav.names[modalNav.idx + d];
+  if(n) openCreativeModal(encodeURIComponent(n), modalNav.period);
+}
 function openCreativeModal(encodedName, clickedPeriod){
   const name = decodeURIComponent(encodedName);
+  buildModalNav_(name, clickedPeriod);
   const hist = creativeHistory[name] || [];
   const img = allCreoImages[name] || null;
   const link = allCreoLinks[name] || null;
@@ -857,13 +913,28 @@ function openCreativeModal(encodedName, clickedPeriod){
     </div>
   `;
   document.getElementById('creoModal').classList.add('open');
+  document.getElementById('creoModal').scrollTop = 0;
+  updateModalNav_();
 }
 function closeCreativeModal(){
   document.getElementById('creoModal').classList.remove('open');
+  modalNav = {names:[], idx:-1, period:null};
+  updateModalNav_();
 }
+document.getElementById('modalPrev').addEventListener('click', ()=>goModalNav_(-1));
+document.getElementById('modalNext').addEventListener('click', ()=>goModalNav_(1));
 document.getElementById('modalClose').addEventListener('click', closeCreativeModal);
 document.getElementById('creoModal').addEventListener('click', (e)=>{ if(e.target.id==='creoModal') closeCreativeModal(); });
-document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeCreativeModal(); });
+document.addEventListener('keydown', (e)=>{
+  if(e.key==='Escape') closeCreativeModal();
+  const open = document.getElementById('creoModal').classList.contains('open');
+  if(open && (e.key==='ArrowLeft' || e.key==='ArrowRight')){
+    const t = e.target && e.target.tagName;
+    if(t==='INPUT' || t==='TEXTAREA' || t==='SELECT') return;
+    e.preventDefault();
+    goModalNav_(e.key==='ArrowLeft' ? -1 : 1);
+  }
+});
 document.addEventListener('click', (e)=>{
   const copyBtn = e.target.closest('.copy-btn');
   if(copyBtn){
