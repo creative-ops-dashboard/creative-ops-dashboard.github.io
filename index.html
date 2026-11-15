@@ -76,6 +76,39 @@
   .stat-box .num{font-family:'Fraunces',serif;font-size:26px;font-weight:600;color:var(--accent);}
   .stat-box .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:2px;}
 
+  /* ---- WINNERS_TAB ---- */
+  .win-chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 18px;}
+  .win-chip{appearance:none;border:1px solid var(--line);background:var(--panel-2);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:12px;padding:7px 12px;border-radius:8px;cursor:pointer;}
+  .win-chip:hover{color:var(--text);border-color:var(--accent);}
+  .win-chip.active{background:var(--accent);color:#1a1207;border-color:var(--accent);}
+  .win-opt{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);cursor:pointer;margin-left:auto;}
+  .win-opt input{accent-color:var(--accent);width:14px;height:14px;}
+  .win-list{display:flex;flex-direction:column;gap:10px;}
+  .win-row{display:grid;grid-template-columns:34px 150px minmax(0,1fr) auto;gap:16px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px;cursor:pointer;transition:border-color .15s ease;}
+  .win-row:hover{border-color:var(--accent);}
+  .win-row.holding{border-color:var(--good-dim);}
+  .win-rank{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--muted-2);text-align:center;}
+  .win-thumb{width:150px;aspect-ratio:16/9;border-radius:8px;object-fit:contain;background:var(--panel-3);display:block;}
+  .win-thumb.ph{display:flex;align-items:center;justify-content:center;color:var(--muted-2);font-weight:700;}
+  .win-main{min-width:0;}
+  .win-main .nm{font-family:'IBM Plex Mono',monospace;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 0 6px;}
+  .win-main .nm .game-pill{margin-right:8px;}
+  .win-span{font-size:12px;color:var(--muted-2);margin:0 0 4px;} /* WINNERS_V2 */
+  .win-note{font-size:12px;color:var(--muted);}
+  .win-note.hold{color:var(--good);font-weight:600;}
+  .win-count{text-align:right;white-space:nowrap;}
+  .win-count .n{font-family:'Fraunces',serif;font-size:30px;font-weight:600;color:var(--accent);line-height:1;}
+  .win-count .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:3px;}
+  .win-empty{color:var(--muted);padding:20px 4px;font-size:14px;}
+  @media (max-width:720px){
+    .win-row{grid-template-columns:110px minmax(0,1fr);gap:10px 12px;padding:10px 12px;}
+    .win-rank{display:none;}
+    .win-thumb{width:110px;}
+    .win-count{grid-column:1 / -1;text-align:left;display:flex;align-items:baseline;gap:8px;}
+    .win-count .l{margin-top:0;}
+    .win-opt{margin-left:0;}
+  }
+
   /* ---- live/data-source note ---- */
   .note{
     background:var(--panel-2);border:1px solid var(--line);border-left:3px solid var(--accent);
@@ -391,7 +424,8 @@
 </header>
 
 <nav class="tabs">
-  <button class="tab-btn active" data-view="adjoe">Adjoe: A/B-тесты и креативы<span class="count" id="cnt-adjoe"></span></button>
+  <button class="tab-btn active" data-view="adjoe">Adjoe: история A/B-тестов<span class="count" id="cnt-adjoe"></span></button>
+  <button class="tab-btn" data-view="winners">Топ креативов</button>
   <button class="tab-btn" data-view="status">Статус обновления<span class="count">15 сорсов</span></button>
 </nav>
 
@@ -456,6 +490,19 @@
     </div>
   </section>
 
+
+  <!-- ===================== TAB: WINNERS ===================== -->
+  <section id="view-winners" class="view">
+    <div class="view-head">
+      <div>
+        <h2>Топ креативов: кто выдержал больше всего тестов</h2>
+        <p>История за весь период: рейтинг по числу тестов, которые креатив выиграл и остался в следующем (не только текущие победители). Проигравший креатив из тестов выбывает, поэтому главный показатель — сколько тестов он продержался. Клик по строке открывает карточку креатива.</p>
+      </div>
+    </div>
+    <div class="stat-strip" id="winStats"></div>
+    <div class="win-chips" id="winChips"></div>
+    <div class="win-list" id="winList"></div>
+  </section>
 
 <div class="modal-overlay" id="creoModal">
   <div class="modal-box">
@@ -844,6 +891,107 @@ function renderMatrix(filter=''){
 document.getElementById('statusSearch').addEventListener('input', e=>renderMatrix(e.target.value));
 document.getElementById('activeOnlyFilter').addEventListener('change', ()=>renderMatrix(document.getElementById('statusSearch').value));
 
+/* ===================== WINNERS_TAB: рейтинг победителей ===================== */
+let winGame = '';            /* '' = все тайтлы */
+let winShowSingle = false;   /* показывать и креативы с одной победой */
+let winData_ = null;
+
+/* ключ креатива: тайтл + название без префикса тайтла (один и тот же файл иногда записан с префиксом "FW_" и без) */
+function winKey_(game, name){
+  return game + '|' + String(name).toLowerCase().replace(new RegExp('^'+String(game).toLowerCase()+'_'),'').replace(/[_\s]+$/,'');
+}
+function buildWinData_(){
+  const map = {};
+  abTests2026.forEach((p, pi)=>p.games.forEach(g=>g.creatives.forEach(c=>{
+    const k = winKey_(g.game, c.name);
+    const o = map[k] || (map[k] = {key:k, game:g.game, names:[], periods:{}, img:null, link:null});
+    if(o.names.indexOf(c.name) === -1) o.names.push(c.name);
+    const st = c.status==='win' ? 'win' : (c.status==='lost' ? 'lost' : 'run');
+    const prev = o.periods[pi];
+    /* в одном периоде креатив может встретиться в двух блоках: победа важнее поражения */
+    if(!prev || st==='win' || (st==='lost' && prev==='run')) o.periods[pi] = st;
+    o.last = {name:c.name, period:p.period, pi};
+    if(c.img){ o.img = c.img; }
+    if(c.link){ o.link = c.link; }
+  })));
+  const lastPi = abTests2026.length - 1;
+  const rows = Object.values(map).map(o=>{
+    const idxs = Object.keys(o.periods).map(Number).sort((a,b)=>a-b);
+    const seq = idxs.map(i=>({pi:i, period:abTests2026[i].period, st:o.periods[i]}));
+    const wins = seq.filter(s=>s.st==='win').length;
+    const lastSt = seq[seq.length-1];
+    const holding = wins>0 && lastSt.st==='run' && lastSt.pi===lastPi && abTests2026[lastPi].games.some(g=>g.running);
+    const lostAt = (!holding && lastSt.st==='lost') ? lastSt.period : null;
+    /* карточка креатива: история под последним названием должна включать и записи под старым вариантом названия */
+    if(o.names.length > 1){
+      const latest = o.last.name;
+      let merged = [];
+      o.names.forEach(n=>{ merged = merged.concat((creativeHistory[n]||[]).filter(x=>String(x.game)===String(o.game))); });
+      const seen = new Set();
+      creativeHistory[latest] = merged.filter(x=>{ const kk = x.period+'|'+x.game+'|'+x.status; if(seen.has(kk)) return false; seen.add(kk); return true; });
+    }
+    allCreoImages[o.last.name] = allCreoImages[o.last.name] || o.img;
+    allCreoLinks[o.last.name] = allCreoLinks[o.last.name] || o.link;
+    return {key:o.key, game:o.game, name:o.last.name, img:o.img, seq, wins, holding, lostAt, lastPi:o.last.pi};
+  });
+  winData_ = rows.filter(r=>r.wins>0);
+}
+function winPlural_(n){ const a=n%10, b=n%100; return (a===1&&b!==11)?'тест':((a>=2&&a<=4&&(b<10||b>=20))?'теста':'тестов'); }
+function renderWinners_(){
+  if(!winData_) buildWinData_();
+  const all = winData_;
+  const titles = [];
+  all.forEach(r=>{ if(titles.indexOf(r.game)===-1) titles.push(r.game); });
+  /* статистика по всем тайтлам */
+  const top = all.slice().sort((a,b)=>b.wins-a.wins)[0];
+  const multi = all.filter(r=>r.wins>=2).length;
+  const holding = all.filter(r=>r.holding).length;
+  document.getElementById('winStats').innerHTML = top ? `
+    <div class="stat-box"><div class="num">${top.wins}</div><div class="lbl">Рекорд: ${top.game}, ${top.name.length>34?top.name.slice(0,33)+'…':top.name}</div></div>
+    <div class="stat-box"><div class="num">${multi}</div><div class="lbl">Креативов выдержали 2+ тестов</div></div>
+    <div class="stat-box"><div class="num">${holding}</div><div class="lbl">Держатся сейчас</div></div>` : '';
+  document.getElementById('winChips').innerHTML =
+    `<button type="button" class="win-chip ${winGame===''?'active':''}" data-wgame="">Все</button>` +
+    titles.map(t=>`<button type="button" class="win-chip ${winGame===t?'active':''}" data-wgame="${t}">${t}</button>`).join('') +
+    `<label class="win-opt"><input type="checkbox" id="winSingle" ${winShowSingle?'checked':''}> показывать и с одной победой</label>`;
+  const rows = all
+    .filter(r=>!winGame || r.game===winGame)
+    .filter(r=>winShowSingle || r.wins>=2 || r.holding)
+    .sort((a,b)=> b.wins-a.wins || (b.holding-a.holding) || b.lastPi-a.lastPi);
+  document.getElementById('winList').innerHTML = rows.length ? rows.map((r,i)=>{
+    const thumb = r.img
+      ? `<img class="win-thumb" src="${imgSized_(r.img, 400)}" loading="lazy" alt="${r.name}" onerror="this.outerHTML='<span class=&quot;win-thumb ph&quot;>${r.name.slice(0,2)}</span>'">`
+      : `<span class="win-thumb ph">${r.name.slice(0,2)}</span>`;
+    const wp = r.seq.filter(s=>s.st==='win').map(s=>s.period);
+    const from = wp[0].split('-')[0].trim(), to = wp[wp.length-1].split('-').pop().trim();
+    const span = `<div class="win-span">Побеждал: ${wp.length>1 ? 'с '+from+' по '+to : (from+' — '+to)}</div>`;
+    const note = r.holding
+      ? `<span class="win-note hold">● держится сейчас — идёт ${r.wins+1}-й тест${r.wins>0?'':''}</span>`
+      : `<span class="win-note">проиграл в тесте ${r.lostAt||'—'}</span>`;
+    return `<div class="win-row ${r.holding?'holding':''}" data-creo="${encodeURIComponent(r.name)}">
+      <div class="win-rank">${i+1}</div>
+      ${thumb}
+      <div class="win-main">
+        <div class="nm" title="${r.name}"><span class="game-pill">${r.game}</span>${r.name}</div>
+        ${span}
+        ${note}
+      </div>
+      <div class="win-count"><div class="n">${r.wins}</div><div class="l">${winPlural_(r.wins)} выдержал</div></div>
+    </div>`;
+  }).join('') : '<div class="win-empty">Нет креативов, подходящих под фильтр.</div>';
+}
+document.addEventListener('click', (e)=>{
+  const chip = e.target.closest && e.target.closest('.win-chip');
+  if(!chip) return;
+  winGame = chip.dataset.wgame || '';
+  renderWinners_();
+});
+document.addEventListener('change', (e)=>{
+  if(!e.target.matches || !e.target.matches('#winSingle')) return;
+  winShowSingle = e.target.checked;
+  renderWinners_();
+});
+
 /* ===================== TABS ===================== */
 document.querySelectorAll('.tab-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
@@ -1091,6 +1239,7 @@ document.addEventListener('click', (e)=>{
   if(ok){
     renderTestGrid();
     renderStats();
+    try{ renderWinners_(); }catch(err){ console.error('winners tab:', err); }
   }
   renderMatrix();
 })();
