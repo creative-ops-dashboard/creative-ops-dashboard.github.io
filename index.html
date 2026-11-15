@@ -120,10 +120,11 @@
   .big-game-block{background:var(--panel);border:1px solid var(--warn-dim);border-radius:14px;padding:18px;}
   .big-game-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
   .big-game-head .game-pill{font-size:13px;padding:4px 12px;}
-  .big-creo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;}
+  .big-creo-grid{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,320px));justify-content:start;gap:16px;} /* ONE_ROW_TILES */
+  @media (max-width:760px){ .big-creo-grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr));justify-content:stretch;} }
   .big-creo-card{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
-  .big-img{width:100%;aspect-ratio:4/3;background:var(--panel-3);overflow:hidden;}
-  .big-img img{width:100%;height:100%;object-fit:cover;display:block;}
+  .big-img{width:100%;aspect-ratio:16/9;background:var(--panel-3);overflow:hidden;} /* FULL_IMAGE_TILES */
+  .big-img img{width:100%;height:100%;object-fit:contain;display:block;}
   .big-img .no-img{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--muted-2);font-size:11px;font-family:'IBM Plex Mono',monospace;}
   .big-img .no-img .placeholder-tile{width:44px;height:44px;border-radius:8px;background:linear-gradient(180deg,#3a4152,#2b3140);display:flex;align-items:center;justify-content:center;color:var(--muted-2);font-family:'Fraunces',serif;font-weight:700;font-size:16px;}
   .big-creo-body{padding:12px 14px 14px;}
@@ -632,7 +633,7 @@ function bigGameBlockHTML(g, period){
   return `
     <div class="big-game-block ${g.running?'':'past'}">
       <div class="big-game-head"><span class="game-pill">${g.game}</span>${flag}</div>
-      <div class="big-creo-grid">
+      <div class="big-creo-grid" style="--n:${Math.max(1, g.creatives.length)}">
         ${g.creatives.map(c=>bigCreoCardHTML(c, period)).join('')}
       </div>
     </div>`;
