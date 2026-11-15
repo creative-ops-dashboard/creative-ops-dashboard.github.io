@@ -335,6 +335,45 @@
     .modal-section h4{font-size:15px;line-height:1.35;}
     .hist-table{min-width:520px;}
   }
+
+  /* LIGHTBOX_PATCH: увеличение картинок, переключатель метрик, крупные плитки прошлых тестов */
+  .metrics-toggle{display:flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:12px;padding:8px 14px;
+    border-radius:8px;background:var(--panel-2);color:var(--text);border:1px solid var(--line);cursor:pointer;white-space:nowrap;user-select:none;flex:none;}
+  .metrics-toggle:hover{border-color:var(--accent-dim);}
+  .metrics-toggle input{accent-color:var(--accent);width:15px;height:15px;margin:0;cursor:pointer;}
+  .modal-hero-img img{cursor:zoom-in;} /* CARD_ONLY_ZOOM */
+  .big-creo-card.is-win{border-color:var(--good);box-shadow:0 0 0 1px var(--good),0 0 18px rgba(111,207,151,.18);}
+  .big-creo-body .win-tag{color:var(--good);font-weight:600;font-size:11.5px;font-family:'IBM Plex Mono',monospace;}
+  .big-creo-body .lost-tag{color:var(--muted-2);font-size:11.5px;font-family:'IBM Plex Mono',monospace;}
+  .big-game-block.past{border-color:var(--line);}
+  .big-game-head .winner-flag{max-width:none;}
+  .past-big{padding:0 18px 18px;margin-bottom:0;}
+  .lightbox{position:fixed;inset:0;z-index:300;background:rgba(6,8,12,.97);display:none;flex-direction:column;align-items:center;justify-content:center;padding:4vh 4vw;}
+  .lightbox.open{display:flex;}
+  .lb-img{max-width:min(92vw,1500px);max-height:76vh;object-fit:contain;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.6);background:var(--panel-3);}
+  .lb-cap{margin-top:14px;text-align:center;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;max-width:92vw;word-break:break-word;}
+  .lb-cap .lb-status{display:block;margin-top:4px;font-size:12px;color:var(--muted);}
+  .lb-cap .lb-status.win{color:var(--good);}
+  .lb-open-card{margin-top:10px;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:8px 14px;border-radius:8px;background:var(--panel-2);color:var(--text);border:1px solid var(--line);cursor:pointer;}
+  .lb-open-card:hover{border-color:var(--accent);color:var(--accent);}
+  .lb-close{position:absolute;top:16px;right:16px;width:40px;height:40px;border-radius:10px;background:var(--panel-2);border:1px solid var(--line);color:var(--muted);cursor:pointer;font-size:16px;}
+  .lb-close:hover{color:var(--bad);border-color:var(--bad);}
+  .lb-nav{position:absolute;top:50%;transform:translateY(-50%);width:50px;height:50px;border-radius:50%;background:var(--panel-2);border:1px solid var(--line);
+    color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(0,0,0,.45);transition:border-color .12s,color .12s,opacity .12s;}
+  .lb-nav svg{width:22px;height:22px;}
+  .lb-nav:hover:not(:disabled){border-color:var(--accent);color:var(--accent);}
+  .lb-nav:disabled{opacity:.28;cursor:default;}
+  .lb-nav.hide{display:none;}
+  #lbPrev{left:max(10px,2vw);}
+  #lbNext{right:max(10px,2vw);}
+  @media (max-width:900px){
+    .lb-nav{top:auto;bottom:18px;transform:none;}
+    #lbPrev{left:calc(50% - 62px);}
+    #lbNext{left:auto;right:calc(50% - 62px);}
+    .lb-img{max-height:62vh;}
+    .lb-cap{margin-bottom:64px;}
+    .past-big{padding:0 10px 14px;}
+  }
 </style>
 </head>
 <body>
@@ -368,6 +407,7 @@
         <button class="filter-dd-btn" id="titleFilterBtn" type="button">Тайтлы: все ▾</button>
         <div class="filter-dd-panel" id="titleFilterPanel"></div>
       </div>
+      <label class="metrics-toggle" title="Снимите галочку, чтобы в прошлых тестах показывались крупные превью креативов вместо таблиц с метриками"><input type="checkbox" id="metricsToggle" checked> Метрики</label>
     </div>
 
     <div class="note">
@@ -421,6 +461,13 @@
     <button class="modal-close" id="modalClose">✕</button>
     <div id="modalBody"></div>
   </div>
+</div>
+<div class="lightbox" id="lightbox">
+  <button class="lb-close" id="lbClose" type="button" aria-label="Закрыть">✕</button>
+  <button class="lb-nav" id="lbPrev" type="button" aria-label="Предыдущий креатив" title="Предыдущий (←)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+  <img class="lb-img" id="lbImg" alt="">
+  <div class="lb-cap" id="lbCap"></div>
+  <button class="lb-nav" id="lbNext" type="button" aria-label="Следующий креатив" title="Следующий (→)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
 </div>
 <button class="modal-nav" id="modalPrev" type="button" aria-label="Предыдущий креатив" title="Предыдущий креатив (←)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
 <button class="modal-nav" id="modalNext" type="button" aria-label="Следующий креатив" title="Следующий креатив (→)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
@@ -565,22 +612,26 @@ function bigCreoCardHTML(c, period){
   allCreoImages[c.name] = c.img || null;
   allCreoLinks[c.name] = c.link || null;
   const imgBlock = c.img
-    ? `<div class="big-img"><img src="${c.img}" loading="lazy" alt="${c.name}" onerror="this.parentElement.innerHTML='<div class=no-img><div class=placeholder-tile>${c.name.slice(0,2)}</div>нет превью</div>'"></div>`
+    ? `<div class="big-img"><img src="${imgSized_(c.img, 800)}" loading="lazy" alt="${c.name}" onerror="this.parentElement.innerHTML='<div class=no-img><div class=placeholder-tile>${c.name.slice(0,2)}</div>нет превью</div>'"></div>`
     : `<div class="big-img"><div class="no-img"><div class="placeholder-tile">${c.name.slice(0,2)}</div>нет превью</div></div>`;
+  const tag = c.status==='win' ? '<span class="win-tag">🏆 победил</span>'
+            : (c.status==='lost' ? '<span class="lost-tag">проиграл</span>' : '<span class="t-tag">● идёт тест</span>');
   return `
-    <div class="big-creo-card" data-creo="${encodeURIComponent(c.name)}" data-period="${period}">
+    <div class="big-creo-card ${c.status==='win'?'is-win':''}" data-creo="${encodeURIComponent(c.name)}" data-period="${period}">
       ${imgBlock}
       <div class="big-creo-body">
         <div class="creo-name" title="${c.name}">${c.name}</div>
-        <div class="creo-meta"><span class="t-tag">● идёт тест</span></div>
+        <div class="creo-meta">${tag}</div>
       </div>
     </div>`;
 }
 
 function bigGameBlockHTML(g, period){
+  const w = g.creatives.find(c=>c.status==='win');
+  const flag = g.running ? '<span class="running-flag">● тест идёт</span>' : (w ? `<span class="winner-flag">победил: ${w.name}</span>` : '');
   return `
-    <div class="big-game-block">
-      <div class="big-game-head"><span class="game-pill">${g.game}</span><span class="running-flag">● тест идёт</span></div>
+    <div class="big-game-block ${g.running?'':'past'}">
+      <div class="big-game-head"><span class="game-pill">${g.game}</span>${flag}</div>
       <div class="big-creo-grid">
         ${g.creatives.map(c=>bigCreoCardHTML(c, period)).join('')}
       </div>
@@ -711,16 +762,17 @@ function renderPastTests(){
     .filter(p => p.games.length);
 
   const pastWrap = document.getElementById('pastTestsSection');
+  const openSet = new Set([...pastWrap.querySelectorAll('details[open]')].map(d=>d.dataset.period));
   pastWrap.innerHTML = filtered.map(p => `
-    <details class="period-accordion">
+    <details class="period-accordion" data-period="${p.period}" ${openSet.has(p.period)?'open':''}>
       <summary>
         <span class="period-dot"></span>
         <span class="period-summary-title">${p.period}</span>
         <span class="period-count">${p.games.length} ${p.games.length===1?'игра':'игр'}</span>
       </summary>
-      <div class="test-grid">
-        ${p.games.map(g=>gameCardHTML(g, p.period)).join('')}
-      </div>
+      ${showMetrics
+        ? `<div class="test-grid">${p.games.map(g=>gameCardHTML(g, p.period)).join('')}</div>`
+        : `<div class="big-game-list past-big">${p.games.map(g=>bigGameBlockHTML(g, p.period)).join('')}</div>`}
     </details>
   `).join('');
 }
@@ -802,6 +854,83 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
 });
 
 /* ===================== INIT ===================== */
+/* ===================== LIGHTBOX + ПЕРЕКЛЮЧАТЕЛЬ МЕТРИК ===================== */
+let showMetrics = true;
+try{ showMetrics = localStorage.getItem('dash_show_metrics') !== '0'; }catch(e){}
+let modalCurrent = {name:null, period:null};
+const imgSized_ = (url, w) => url ? url.replace(/=w\d+(-h\d+)?$/, '=w'+w) : url;
+function creoInfo_(name, period){
+  const p = abTests2026.find(x=>x.period===period);
+  if(p) for(const g of p.games){ const c = g.creatives.find(x=>x.name===name); if(c) return {c, game:g.game}; }
+  return null;
+}
+let lb = {names:[], idx:-1, period:null};
+function lbOpen_(name, period){
+  const names = [];
+  if(period){
+    document.querySelectorAll('[data-creo]').forEach(el=>{
+      if(el.dataset.period !== period) return;
+      const n = decodeURIComponent(el.dataset.creo);
+      if(names.indexOf(n) === -1) names.push(n);
+    });
+  }
+  let idx = names.indexOf(name);
+  if(idx < 0){ names.length = 0; names.push(name); idx = 0; }
+  lb = {names, idx, period: period||null};
+  lbRender_();
+  document.getElementById('lightbox').classList.add('open');
+}
+function lbRender_(){
+  const name = lb.names[lb.idx];
+  const info = creoInfo_(name, lb.period);
+  const c = info && info.c;
+  const url = allCreoImages[name] || (c && c.img) || '';
+  const img = document.getElementById('lbImg');
+  img.onerror = ()=>{ if(url && img.src !== url) img.src = url; };
+  img.src = imgSized_(url, 1600) || '';
+  img.alt = name;
+  const st = c ? (c.status==='win' ? '<span class="lb-status win">🏆 победил</span>' : (c.status==='lost' ? '<span class="lb-status">проиграл</span>' : '<span class="lb-status">идёт тест</span>')) : '';
+  document.getElementById('lbCap').innerHTML = '<div>'+name+'</div>'+st;
+  const many = lb.names.length > 1;
+  document.getElementById('lbPrev').classList.toggle('hide', !many);
+  document.getElementById('lbNext').classList.toggle('hide', !many);
+  document.getElementById('lbPrev').disabled = lb.idx <= 0;
+  document.getElementById('lbNext').disabled = lb.idx >= lb.names.length-1;
+}
+function lbClose_(){
+  document.getElementById('lightbox').classList.remove('open');
+  const n = lb.names[lb.idx];
+  if(n && modalCurrent.name && n !== modalCurrent.name && document.getElementById('creoModal').classList.contains('open')){
+    openCreativeModal(encodeURIComponent(n), lb.period);
+  }
+}
+function lbGo_(d){
+  const i = lb.idx + d;
+  if(i < 0 || i >= lb.names.length) return;
+  lb.idx = i; lbRender_();
+}
+document.getElementById('lbClose').addEventListener('click', lbClose_);
+document.getElementById('lbPrev').addEventListener('click', ()=>lbGo_(-1));
+document.getElementById('lbNext').addEventListener('click', ()=>lbGo_(1));
+document.getElementById('lightbox').addEventListener('click', (e)=>{ if(e.target.id==='lightbox') lbClose_(); });
+/* клик по главной картинке в карточке креатива - увеличить (в таблицах и плитках по картинке открывается карточка, как раньше) */
+document.addEventListener('click', (e)=>{
+  const t = e.target.closest && e.target.closest('.modal-hero-img img');
+  if(!t || !modalCurrent.name) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  lbOpen_(modalCurrent.name, modalCurrent.period);
+}, true);
+(function(){
+  const el = document.getElementById('metricsToggle');
+  if(!el) return;
+  el.checked = showMetrics;
+  el.addEventListener('change', ()=>{
+    showMetrics = el.checked;
+    try{ localStorage.setItem('dash_show_metrics', showMetrics ? '1' : '0'); }catch(e){}
+    renderPastTests();
+  });
+})();
+
 /* ===================== CREATIVE DETAIL MODAL ===================== */
 /* Листание карточек: список креативов берётся из карточек выбранного теста на экране (порядок и фильтр по тайтлам как на странице). */
 let modalNav = {names:[], idx:-1, period:null};
@@ -832,6 +961,7 @@ function goModalNav_(d){
 function openCreativeModal(encodedName, clickedPeriod){
   const name = decodeURIComponent(encodedName);
   buildModalNav_(name, clickedPeriod);
+  modalCurrent = {name, period: clickedPeriod||null};
   const hist = creativeHistory[name] || [];
   const img = allCreoImages[name] || null;
   const link = allCreoLinks[name] || null;
@@ -883,7 +1013,7 @@ function openCreativeModal(encodedName, clickedPeriod){
       <td>${platCell(h.gp)}</td>
     </tr>`).join('');
   const imgBlock = img
-    ? `<div class="modal-hero-img"><img src="${img}" alt="${name}"></div>`
+    ? `<div class="modal-hero-img"><img src="${img}" alt="${name}" title="Увеличить"></div>`
     : `<div class="modal-hero-img"><div class="no-img" style="width:100%;height:100%;"><div class="placeholder-tile">${name.slice(0,2)}</div>нет превью</div></div>`;
   document.getElementById('modalBody').innerHTML = `
     <div class="modal-hero">
@@ -926,6 +1056,11 @@ document.getElementById('modalNext').addEventListener('click', ()=>goModalNav_(1
 document.getElementById('modalClose').addEventListener('click', closeCreativeModal);
 document.getElementById('creoModal').addEventListener('click', (e)=>{ if(e.target.id==='creoModal') closeCreativeModal(); });
 document.addEventListener('keydown', (e)=>{
+  if(document.getElementById('lightbox').classList.contains('open')){
+    if(e.key==='Escape'){ lbClose_(); e.preventDefault(); return; }
+    if(e.key==='ArrowLeft' || e.key==='ArrowRight'){ lbGo_(e.key==='ArrowLeft' ? -1 : 1); e.preventDefault(); return; }
+    return;
+  }
   if(e.key==='Escape') closeCreativeModal();
   const open = document.getElementById('creoModal').classList.contains('open');
   if(open && (e.key==='ArrowLeft' || e.key==='ArrowRight')){
